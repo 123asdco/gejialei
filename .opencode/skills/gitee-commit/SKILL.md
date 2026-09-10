@@ -10,7 +10,7 @@ description: 提交项目到Gitee仓库。当用户要求提交代码、推送�
 
 ## 配置信息
 - **仓库地址**: https://gitee.com/neusoft_wangyao_jsj/webdesign004project.git
-- **私人令牌**: 4d8912d1ec97688b7944c617c6850bd0
+- **私人令牌**: 9f544ef71795bbcc6b95f135a391b26d
 
 ## 操作步骤
 
@@ -21,7 +21,7 @@ git init
 
 ### 2. 添加远程仓库（使用令牌认证）
 ```bash
-git remote add origin https://oauth2:4d8912d1ec97688b7944c617c6850bd0@gitee.com/neusoft_wangyao_jsj/webdesign004project.git
+git remote add origin https://oauth2:9f544ef71795bbcc6b95f135a391b26d@gitee.com/neusoft_wangyao_jsj/webdesign004project.git
 ```
 
 ### 3. 添加所有文件到暂存区
