@@ -220,8 +220,8 @@
 
   // 总分：reduce 累加各科
   function getTotal(s) {
-    return SUBJECTS.reduce(function (nmh_sum, nmh_sub) {
-      return nmh_sum + s[nmh_sub.key];
+    return SUBJECTS.reduce(function (gjl_sum, gjl_sub) {
+      return gjl_sum + s[gjl_sub.key];
     }, 0);
   }
 
@@ -232,8 +232,8 @@
 
   // 不及格科目数组：filter
   function getFails(s) {
-    return SUBJECTS.filter(function (nmh_sub) {
-      return s[nmh_sub.key] < PASS_LINE;
+    return SUBJECTS.filter(function (gjl_sub) {
+      return s[gjl_sub.key] < PASS_LINE;
     });
   }
 
@@ -250,23 +250,23 @@
    * 注意 statPassRate 内有 <span class="stat-unit">%</span>，用 .firstChild 改数字
    */
   function renderStats(list) {
-    var nmh_totalScore = list.reduce(function (nmh_sum, nmh_s) {
-      return nmh_sum + getTotal(nmh_s);
+    var gjl_totalScore = list.reduce(function (gjl_sum, gjl_s) {
+      return gjl_sum + getTotal(gjl_s);
     }, 0);
-    var nmh_avgScore = list.length
-      ? Math.round(nmh_totalScore / (list.length * SUBJECTS.length) * 10) / 10
+    var gjl_avgScore = list.length
+      ? Math.round(gjl_totalScore / (list.length * SUBJECTS.length) * 10) / 10
       : 0;
-    var nmh_passCount = list.filter(function (nmh_s) {
-      return getFails(nmh_s).length === 0;
+    var gjl_passCount = list.filter(function (gjl_s) {
+      return getFails(gjl_s).length === 0;
     }).length;
-    var nmh_passRate = list.length
-      ? Math.round(nmh_passCount / list.length * 100)
+    var gjl_passRate = list.length
+      ? Math.round(gjl_passCount / list.length * 100)
       : 0;
 
     document.getElementById("statCount").textContent = list.length;
-    document.getElementById("statTotalScore").textContent = nmh_totalScore;
-    document.getElementById("statAvgScore").textContent = nmh_avgScore;
-    document.getElementById("statPassRate").firstChild.textContent = nmh_passRate;
+    document.getElementById("statTotalScore").textContent = gjl_totalScore;
+    document.getElementById("statAvgScore").textContent = gjl_avgScore;
+    document.getElementById("statPassRate").firstChild.textContent = gjl_passRate;
   }
 
 
@@ -275,41 +275,41 @@
    * 用 requestAnimationFrame 触发 width 动画（item.querySelector("i")）
    */
   function renderSubjectAverages(list) {
-    var nmh_box = document.getElementById("subjectList");
-    nmh_box.innerHTML = "";
+    var gjl_box = document.getElementById("subjectList");
+    gjl_box.innerHTML = "";
 
-    SUBJECTS.forEach(function (nmh_sub) {
+    SUBJECTS.forEach(function (gjl_sub) {
       // 本科平均分：reduce 累加 / 人数
-      var nmh_avg = list.reduce(function (nmh_sum, nmh_s) {
-        return nmh_sum + nmh_s[nmh_sub.key];
+      var gjl_avg = list.reduce(function (gjl_sum, gjl_s) {
+        return gjl_sum + gjl_s[gjl_sub.key];
       }, 0) / (list.length || 1);
-      nmh_avg = Math.round(nmh_avg * 10) / 10;
+      gjl_avg = Math.round(gjl_avg * 10) / 10;
 
       // 结构：科目名 + 进度条 + 平均分
-      var nmh_item = document.createElement("div");
-      nmh_item.className = "subject-item";
+      var gjl_item = document.createElement("div");
+      gjl_item.className = "subject-item";
 
-      var nmh_nameEl = document.createElement("span");
-      nmh_nameEl.className = "subject-name";
-      nmh_nameEl.textContent = nmh_sub.name;
+      var gjl_nameEl = document.createElement("span");
+      gjl_nameEl.className = "subject-name";
+      gjl_nameEl.textContent = gjl_sub.name;
 
-      var nmh_bar = document.createElement("div");
-      nmh_bar.className = "subject-bar";
-      var nmh_fill = document.createElement("i"); // 初始 width:0，稍后动画撑开
-      nmh_bar.appendChild(nmh_fill);
+      var gjl_bar = document.createElement("div");
+      gjl_bar.className = "subject-bar";
+      var gjl_fill = document.createElement("i"); // 初始 width:0，稍后动画撑开
+      gjl_bar.appendChild(gjl_fill);
 
-      var nmh_valEl = document.createElement("span");
-      nmh_valEl.className = "subject-value";
-      nmh_valEl.textContent = nmh_avg;
+      var gjl_valEl = document.createElement("span");
+      gjl_valEl.className = "subject-value";
+      gjl_valEl.textContent = gjl_avg;
 
-      nmh_item.appendChild(nmh_nameEl);
-      nmh_item.appendChild(nmh_bar);
-      nmh_item.appendChild(nmh_valEl);
-      nmh_box.appendChild(nmh_item);
+      gjl_item.appendChild(gjl_nameEl);
+      gjl_item.appendChild(gjl_bar);
+      gjl_item.appendChild(gjl_valEl);
+      gjl_box.appendChild(gjl_item);
 
       // 下一帧再设宽度，触发 CSS transition 动画
       requestAnimationFrame(function () {
-        nmh_item.querySelector("i").style.width = (nmh_avg / nmh_sub.full * 100) + "%";
+        gjl_item.querySelector("i").style.width = (gjl_avg / gjl_sub.full * 100) + "%";
       });
     });
   }
@@ -324,122 +324,122 @@
    */
   function renderRankings(list) {
     /* --- 1. 优秀 Top3 → #topStudentsList --- */
-    var nmh_top = list
-      .filter(function (nmh_s) { return getAvg(nmh_s) >= EXCELLENT_AVG; })
-      .sort(function (nmh_a, nmh_b) { return getTotal(nmh_b) - getTotal(nmh_a); })
+    var gjl_top = list
+      .filter(function (gjl_s) { return getAvg(gjl_s) >= EXCELLENT_AVG; })
+      .sort(function (gjl_a, gjl_b) { return getTotal(gjl_b) - getTotal(gjl_a); })
       .slice(0, 3);
 
-    var nmh_topBox = document.getElementById("topStudentsList");
-    nmh_topBox.innerHTML = "";
-    if (nmh_top.length === 0) {
-      nmh_topBox.innerHTML = '<div class="empty">暂无优秀学生</div>';
+    var gjl_topBox = document.getElementById("topStudentsList");
+    gjl_topBox.innerHTML = "";
+    if (gjl_top.length === 0) {
+      gjl_topBox.innerHTML = '<div class="empty">暂无优秀学生</div>';
     } else {
-      nmh_top.forEach(function (nmh_s, nmh_i) {
-        var nmh_row = document.createElement("div");
-        nmh_row.className = "rank-row";
+      gjl_top.forEach(function (gjl_s, gjl_i) {
+        var gjl_row = document.createElement("div");
+        gjl_row.className = "rank-row";
 
-        var nmh_rk = document.createElement("span");
-        nmh_rk.className = "rk r" + (nmh_i + 1); // 金/银/铜底色
-        nmh_rk.textContent = nmh_i + 1;
+        var gjl_rk = document.createElement("span");
+        gjl_rk.className = "rk r" + (gjl_i + 1); // 金/银/铜底色
+        gjl_rk.textContent = gjl_i + 1;
 
-        var nmh_nm = document.createElement("span");
-        nmh_nm.className = "nm";
-        nmh_nm.textContent = nmh_s.name + "（" + nmh_s.id + "）";
+        var gjl_nm = document.createElement("span");
+        gjl_nm.className = "nm";
+        gjl_nm.textContent = gjl_s.name + "（" + gjl_s.id + "）";
 
-        var nmh_vl = document.createElement("span");
-        nmh_vl.className = "vl";
-        nmh_vl.textContent = getAvg(nmh_s);
+        var gjl_vl = document.createElement("span");
+        gjl_vl.className = "vl";
+        gjl_vl.textContent = getAvg(gjl_s);
 
-        nmh_row.appendChild(nmh_rk);
-        nmh_row.appendChild(nmh_nm);
-        nmh_row.appendChild(nmh_vl);
-        nmh_topBox.appendChild(nmh_row);
+        gjl_row.appendChild(gjl_rk);
+        gjl_row.appendChild(gjl_nm);
+        gjl_row.appendChild(gjl_vl);
+        gjl_topBox.appendChild(gjl_row);
       });
     }
 
     /* --- 2. 各科状元 → #subjectChampionsList --- */
-    var nmh_champBox = document.getElementById("subjectChampionsList");
-    nmh_champBox.innerHTML = "";
-    SUBJECTS.forEach(function (nmh_sub) {
+    var gjl_champBox = document.getElementById("subjectChampionsList");
+    gjl_champBox.innerHTML = "";
+    SUBJECTS.forEach(function (gjl_sub) {
       // reduce 找该科最高分者（同分保留先出现者）
-      var nmh_top_s = list.reduce(function (nmh_best, nmh_s) {
-        return nmh_s[nmh_sub.key] > nmh_best[nmh_sub.key] ? nmh_s : nmh_best;
+      var gjl_top_s = list.reduce(function (gjl_best, gjl_s) {
+        return gjl_s[gjl_sub.key] > gjl_best[gjl_sub.key] ? gjl_s : gjl_best;
       }, list[0]);
 
-      var nmh_row = document.createElement("div");
-      nmh_row.className = "champ-row";
+      var gjl_row = document.createElement("div");
+      gjl_row.className = "champ-row";
 
-      var nmh_sbj = document.createElement("span");
-      nmh_sbj.className = "sbj";
-      nmh_sbj.textContent = nmh_sub.name;
+      var gjl_sbj = document.createElement("span");
+      gjl_sbj.className = "sbj";
+      gjl_sbj.textContent = gjl_sub.name;
 
-      var nmh_nm = document.createElement("span");
-      nmh_nm.className = "nm";
-      nmh_nm.textContent = nmh_top_s.name;
+      var gjl_nm = document.createElement("span");
+      gjl_nm.className = "nm";
+      gjl_nm.textContent = gjl_top_s.name;
 
-      var nmh_vl = document.createElement("span");
-      nmh_vl.className = "vl";
-      nmh_vl.textContent = nmh_top_s[nmh_sub.key];
+      var gjl_vl = document.createElement("span");
+      gjl_vl.className = "vl";
+      gjl_vl.textContent = gjl_top_s[gjl_sub.key];
 
-      nmh_row.appendChild(nmh_sbj);
-      nmh_row.appendChild(nmh_nm);
-      nmh_row.appendChild(nmh_vl);
-      nmh_champBox.appendChild(nmh_row);
+      gjl_row.appendChild(gjl_sbj);
+      gjl_row.appendChild(gjl_nm);
+      gjl_row.appendChild(gjl_vl);
+      gjl_champBox.appendChild(gjl_row);
     });
 
     /* --- 3. 不及格预警 → #failWarningList --- */
-    var nmh_failBox = document.getElementById("failWarningList");
-    nmh_failBox.innerHTML = "";
-    var nmh_fails = list.filter(function (nmh_s) {
-      return getFails(nmh_s).length > 0;
+    var gjl_failBox = document.getElementById("failWarningList");
+    gjl_failBox.innerHTML = "";
+    var gjl_fails = list.filter(function (gjl_s) {
+      return getFails(gjl_s).length > 0;
     });
-    nmh_fails.sort(function (nmh_a, nmh_b) {
-      return (getFails(nmh_b).length - getFails(nmh_a).length) ||
-             (getTotal(nmh_b) - getTotal(nmh_a));
+    gjl_fails.sort(function (gjl_a, gjl_b) {
+      return (getFails(gjl_b).length - getFails(gjl_a).length) ||
+             (getTotal(gjl_b) - getTotal(gjl_a));
     });
 
-    if (nmh_fails.length === 0) {
-      nmh_failBox.innerHTML = '<div class="empty">全员通过，无预警</div>';
+    if (gjl_fails.length === 0) {
+      gjl_failBox.innerHTML = '<div class="empty">全员通过，无预警</div>';
     } else {
-      nmh_fails.forEach(function (nmh_s) {
-        var nmh_failsOfS = getFails(nmh_s);
-        var nmh_row = document.createElement("div");
-        nmh_row.className = "rank-row";
+      gjl_fails.forEach(function (gjl_s) {
+        var gjl_failsOfS = getFails(gjl_s);
+        var gjl_row = document.createElement("div");
+        gjl_row.className = "rank-row";
 
-        var nmh_rk = document.createElement("span");
-        nmh_rk.className = "rk";
-        nmh_rk.textContent = nmh_failsOfS.length;
+        var gjl_rk = document.createElement("span");
+        gjl_rk.className = "rk";
+        gjl_rk.textContent = gjl_failsOfS.length;
 
-        var nmh_nm = document.createElement("span");
-        nmh_nm.className = "nm";
-        nmh_nm.textContent = nmh_s.name + "（" +
-          nmh_failsOfS.map(function (nmh_sub) { return nmh_sub.name; }).join("、") +
+        var gjl_nm = document.createElement("span");
+        gjl_nm.className = "nm";
+        gjl_nm.textContent = gjl_s.name + "（" +
+          gjl_failsOfS.map(function (gjl_sub) { return gjl_sub.name; }).join("、") +
           "）";
 
-        var nmh_vl = document.createElement("span");
-        nmh_vl.className = "vl";
-        nmh_vl.textContent = getTotal(nmh_s) + "分";
+        var gjl_vl = document.createElement("span");
+        gjl_vl.className = "vl";
+        gjl_vl.textContent = getTotal(gjl_s) + "分";
 
-        nmh_row.appendChild(nmh_rk);
-        nmh_row.appendChild(nmh_nm);
-        nmh_row.appendChild(nmh_vl);
-        nmh_failBox.appendChild(nmh_row);
+        gjl_row.appendChild(gjl_rk);
+        gjl_row.appendChild(gjl_nm);
+        gjl_row.appendChild(gjl_vl);
+        gjl_failBox.appendChild(gjl_row);
       });
     }
 
     /* --- 4. 状态条 #statusTip：some / every 判断 --- */
-    var nmh_tip = document.getElementById("statusTip");
-    var nmh_hasFail = list.some(function (nmh_s) { return getFails(nmh_s).length > 0; });
-    var nmh_allExcellent = list.every(function (nmh_s) { return getAvg(nmh_s) >= EXCELLENT_AVG; });
+    var gjl_tip = document.getElementById("statusTip");
+    var gjl_hasFail = list.some(function (gjl_s) { return getFails(gjl_s).length > 0; });
+    var gjl_allExcellent = list.every(function (gjl_s) { return getAvg(gjl_s) >= EXCELLENT_AVG; });
 
-    nmh_tip.classList.remove("bad");
-    if (nmh_hasFail) {
-      nmh_tip.classList.add("bad");
-      nmh_tip.textContent = "⚠ 班级中存在不及格科目，请关注预警名单中的学生。";
-    } else if (nmh_allExcellent) {
-      nmh_tip.textContent = "🏆 全员优秀（平均分 ≥ " + EXCELLENT_AVG + "），表现卓越！";
+    gjl_tip.classList.remove("bad");
+    if (gjl_hasFail) {
+      gjl_tip.classList.add("bad");
+      gjl_tip.textContent = "⚠ 班级中存在不及格科目，请关注预警名单中的学生。";
+    } else if (gjl_allExcellent) {
+      gjl_tip.textContent = "🏆 全员优秀（平均分 ≥ " + EXCELLENT_AVG + "），表现卓越！";
     } else {
-      nmh_tip.textContent = "✅ 全员及格，继续保持！";
+      gjl_tip.textContent = "✅ 全员及格，继续保持！";
     }
   }
 
@@ -450,97 +450,97 @@
    * 详情区 .detail 默认隐藏，点击卡片后 .student-card.open 展开
    */
   function renderStudentCards(list) {
-    var nmh_box = document.getElementById("studentList");
-    nmh_box.innerHTML = "";
+    var gjl_box = document.getElementById("studentList");
+    gjl_box.innerHTML = "";
 
-    list.forEach(function (nmh_s, nmh_i) {
+    list.forEach(function (gjl_s, gjl_i) {
       // 卡片容器
-      var nmh_card = document.createElement("div");
-      nmh_card.className = "student-card";
-      nmh_card.setAttribute("data-id", nmh_s.id);
+      var gjl_card = document.createElement("div");
+      gjl_card.className = "student-card";
+      gjl_card.setAttribute("data-id", gjl_s.id);
 
       // 头部：头像 + 姓名/学号 + 排名徽章（前三名金色）
-      var nmh_hd = document.createElement("div");
-      nmh_hd.className = "hd";
+      var gjl_hd = document.createElement("div");
+      gjl_hd.className = "hd";
 
-      var nmh_avatar = document.createElement("div");
-      nmh_avatar.className = "avatar " + (nmh_s.gender === "男" ? "boy" : "girl");
-      nmh_avatar.textContent = firstName(nmh_s);
+      var gjl_avatar = document.createElement("div");
+      gjl_avatar.className = "avatar " + (gjl_s.gender === "男" ? "boy" : "girl");
+      gjl_avatar.textContent = firstName(gjl_s);
 
-      var nmh_info = document.createElement("div");
-      var nmh_nameEl = document.createElement("div");
-      nmh_nameEl.className = "name";
-      nmh_nameEl.textContent = nmh_s.name;
-      var nmh_metaEl = document.createElement("div");
-      nmh_metaEl.className = "meta";
-      nmh_metaEl.textContent = nmh_s.id + " · " + nmh_s.gender;
-      nmh_info.appendChild(nmh_nameEl);
-      nmh_info.appendChild(nmh_metaEl);
+      var gjl_info = document.createElement("div");
+      var gjl_nameEl = document.createElement("div");
+      gjl_nameEl.className = "name";
+      gjl_nameEl.textContent = gjl_s.name;
+      var gjl_metaEl = document.createElement("div");
+      gjl_metaEl.className = "meta";
+      gjl_metaEl.textContent = gjl_s.id + " · " + gjl_s.gender;
+      gjl_info.appendChild(gjl_nameEl);
+      gjl_info.appendChild(gjl_metaEl);
 
-      var nmh_badge = document.createElement("span");
-      nmh_badge.className = "rank-badge" + (nmh_i < 3 ? " gold" : "");
-      nmh_badge.textContent = "第" + (nmh_i + 1) + "名";
+      var gjl_badge = document.createElement("span");
+      gjl_badge.className = "rank-badge" + (gjl_i < 3 ? " gold" : "");
+      gjl_badge.textContent = "第" + (gjl_i + 1) + "名";
 
-      nmh_hd.appendChild(nmh_avatar);
-      nmh_hd.appendChild(nmh_info);
-      nmh_hd.appendChild(nmh_badge);
-      nmh_card.appendChild(nmh_hd);
+      gjl_hd.appendChild(gjl_avatar);
+      gjl_hd.appendChild(gjl_info);
+      gjl_hd.appendChild(gjl_badge);
+      gjl_card.appendChild(gjl_hd);
 
       // 五科分数网格
-      var nmh_grid = document.createElement("div");
-      nmh_grid.className = "score-grid";
-      SUBJECTS.forEach(function (nmh_sub) {
-        var nmh_item = document.createElement("div");
-        nmh_item.className = "score-item";
+      var gjl_grid = document.createElement("div");
+      gjl_grid.className = "score-grid";
+      SUBJECTS.forEach(function (gjl_sub) {
+        var gjl_item = document.createElement("div");
+        gjl_item.className = "score-item";
 
-        var nmh_sbj = document.createElement("div");
-        nmh_sbj.className = "sbj";
-        nmh_sbj.textContent = nmh_sub.abbr;
+        var gjl_sbj = document.createElement("div");
+        gjl_sbj.className = "sbj";
+        gjl_sbj.textContent = gjl_sub.abbr;
 
-        var nmh_val = document.createElement("div");
-        nmh_val.className = ("val " + scoreClass(nmh_s[nmh_sub.key])).trim();
-        nmh_val.textContent = nmh_s[nmh_sub.key];
+        var gjl_val = document.createElement("div");
+        gjl_val.className = ("val " + scoreClass(gjl_s[gjl_sub.key])).trim();
+        gjl_val.textContent = gjl_s[gjl_sub.key];
 
-        nmh_item.appendChild(nmh_sbj);
-        nmh_item.appendChild(nmh_val);
-        nmh_grid.appendChild(nmh_item);
+        gjl_item.appendChild(gjl_sbj);
+        gjl_item.appendChild(gjl_val);
+        gjl_grid.appendChild(gjl_item);
       });
-      nmh_card.appendChild(nmh_grid);
+      gjl_card.appendChild(gjl_grid);
 
       // 底部：总分 + 均分
-      var nmh_ft = document.createElement("div");
-      nmh_ft.className = "ft";
-      var nmh_totalEl = document.createElement("span");
-      nmh_totalEl.className = "total";
-      nmh_totalEl.textContent = "总分 " + getTotal(nmh_s);
-      var nmh_avgEl = document.createElement("span");
-      nmh_avgEl.className = "avg";
-      nmh_avgEl.textContent = "均分 " + getAvg(nmh_s);
-      nmh_ft.appendChild(nmh_totalEl);
-      nmh_ft.appendChild(nmh_avgEl);
-      nmh_card.appendChild(nmh_ft);
+      var gjl_ft = document.createElement("div");
+      gjl_ft.className = "ft";
+      var gjl_totalEl = document.createElement("span");
+      gjl_totalEl.className = "total";
+      gjl_totalEl.textContent = "总分 " + getTotal(gjl_s);
+      var gjl_avgEl = document.createElement("span");
+      gjl_avgEl.className = "avg";
+      gjl_avgEl.textContent = "均分 " + getAvg(gjl_s);
+      gjl_ft.appendChild(gjl_totalEl);
+      gjl_ft.appendChild(gjl_avgEl);
+      gjl_card.appendChild(gjl_ft);
 
       // 详情区（点击卡片展开；必须是卡片最后一个子元素，事件委托用 lastElementChild 取它）
-      var nmh_detail = document.createElement("div");
-      nmh_detail.className = "detail";
-      var nmh_pId = document.createElement("p");
-      nmh_pId.innerHTML = "<b>学号：</b>" + nmh_s.id;
-      var nmh_pGender = document.createElement("p");
-      nmh_pGender.innerHTML = "<b>性别：</b>" + nmh_s.gender;
-      var nmh_pStatus = document.createElement("p");
-      var nmh_failsOfS = getFails(nmh_s);
-      if (nmh_failsOfS.length > 0) {
-        nmh_pStatus.innerHTML = "<b>不及格科目：</b>" +
-          nmh_failsOfS.map(function (nmh_sub) { return nmh_sub.name; }).join("、");
+      var gjl_detail = document.createElement("div");
+      gjl_detail.className = "detail";
+      var gjl_pId = document.createElement("p");
+      gjl_pId.innerHTML = "<b>学号：</b>" + gjl_s.id;
+      var gjl_pGender = document.createElement("p");
+      gjl_pGender.innerHTML = "<b>性别：</b>" + gjl_s.gender;
+      var gjl_pStatus = document.createElement("p");
+      var gjl_failsOfS = getFails(gjl_s);
+      if (gjl_failsOfS.length > 0) {
+        gjl_pStatus.innerHTML = "<b>不及格科目：</b>" +
+          gjl_failsOfS.map(function (gjl_sub) { return gjl_sub.name; }).join("、");
       } else {
-        nmh_pStatus.innerHTML = "<b>状态：</b>全科及格 ✓";
+        gjl_pStatus.innerHTML = "<b>状态：</b>全科及格 ✓";
       }
-      nmh_detail.appendChild(nmh_pId);
-      nmh_detail.appendChild(nmh_pGender);
-      nmh_detail.appendChild(nmh_pStatus);
-      nmh_card.appendChild(nmh_detail);
+      gjl_detail.appendChild(gjl_pId);
+      gjl_detail.appendChild(gjl_pGender);
+      gjl_detail.appendChild(gjl_pStatus);
+      gjl_card.appendChild(gjl_detail);
 
-      nmh_box.appendChild(nmh_card);
+      gjl_box.appendChild(gjl_card);
     });
   }
 
@@ -549,11 +549,11 @@
    * 无关键字返回全部
    */
   function search(keyword) {
-    var nmh_kw = keyword.trim().toLowerCase();
-    if (!nmh_kw) return STUDENTS.slice();
-    return STUDENTS.filter(function (nmh_s) {
-      return nmh_s.name.toLowerCase().indexOf(nmh_kw) !== -1 ||
-             nmh_s.id.toLowerCase().indexOf(nmh_kw) !== -1;
+    var gjl_kw = keyword.trim().toLowerCase();
+    if (!gjl_kw) return STUDENTS.slice();
+    return STUDENTS.filter(function (gjl_s) {
+      return gjl_s.name.toLowerCase().indexOf(gjl_kw) !== -1 ||
+             gjl_s.id.toLowerCase().indexOf(gjl_kw) !== -1;
     });
   }
 
@@ -563,17 +563,17 @@
    */
   var currentSort = "total";
   function sortList(list, by) {
-    var nmh_arr = list.slice(); // 复制，不修改原数组
+    var gjl_arr = list.slice(); // 复制，不修改原数组
     if (by === "id") {
-      nmh_arr.sort(function (nmh_a, nmh_b) {
-        return nmh_a.id > nmh_b.id ? 1 : -1;
+      gjl_arr.sort(function (gjl_a, gjl_b) {
+        return gjl_a.id > gjl_b.id ? 1 : -1;
       });
     } else {
-      nmh_arr.sort(function (nmh_a, nmh_b) {
-        return getTotal(nmh_b) - getTotal(nmh_a);
+      gjl_arr.sort(function (gjl_a, gjl_b) {
+        return getTotal(gjl_b) - getTotal(gjl_a);
       });
     }
-    return nmh_arr;
+    return gjl_arr;
   }
 
 
@@ -583,10 +583,10 @@
   var currentFilter = "all";
   function filterList(list, mode) {
     if (mode === "excellent") {
-      return list.filter(function (nmh_s) { return getAvg(nmh_s) >= EXCELLENT_AVG; });
+      return list.filter(function (gjl_s) { return getAvg(gjl_s) >= EXCELLENT_AVG; });
     }
     if (mode === "fail") {
-      return list.filter(function (nmh_s) { return getFails(nmh_s).length > 0; });
+      return list.filter(function (gjl_s) { return getFails(gjl_s).length > 0; });
     }
     return list.slice();
   }

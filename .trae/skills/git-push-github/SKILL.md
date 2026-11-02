@@ -1,11 +1,11 @@
 ---
 name: git-push-github
-description: Commit all changes and push this project to the GitHub repo ninini929/niminghao over SSH. Use when the user says 提交到github, 提交并推送github, push to github, 同步代码到GitHub. Do not use for Gitee or other repositories.
+description: Commit all changes and push this project to the GitHub repo 123asdco/gejialei over SSH. Use when the user says 提交到github, 提交并推送github, push to github, 同步代码到GitHub. Do not use for Gitee or other repositories.
 ---
 
 # 提交到 GitHub
 
-将本项目全部改动 commit 并 push 到 GitHub 仓库 `ninini929/niminghao`，使用已配置的 SSH 公钥认证（不涉及任何令牌）。
+将本项目全部改动 commit 并 push 到 GitHub 仓库 `123asdco/gejialei`，使用已配置的 SSH 公钥认证（不涉及任何令牌）。
 
 ## 执行步骤
 
@@ -13,7 +13,7 @@ description: Commit all changes and push this project to the GitHub repo ninini9
 2. 运行预检（可选）：`powershell -ExecutionPolicy Bypass -File .trae\skills\git-push-github\scripts\push-github.ps1 -Check`
 3. 运行提交推送：`powershell -ExecutionPolicy Bypass -File .trae\skills\git-push-github\scripts\push-github.ps1 -Message "本次改动说明"`
 
-脚本会自动完成：init（若无）、设置远程名 `github` → `ssh://git@ssh.github.com:443/ninini929/niminghao.git`、`git add -A`、commit、push。推送被拒时自动 `pull --rebase` 重试一次；**禁止 force push**。
+脚本会自动完成：init（若无）、设置远程名 `github` → `ssh://git@ssh.github.com:443/123asdco/gejialei.git`、`git add -A`、commit、push。推送被拒时自动 `pull --rebase` 重试一次；**禁止 force push**。
 
 ## 注意
 

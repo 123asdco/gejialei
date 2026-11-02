@@ -1,4 +1,4 @@
-﻿# push-github.ps1 — 提交到 GitHub skill 的确定性执行脚本（PowerShell 5 兼容，SSH 公钥认证）
+﻿﻿# push-github.ps1 — 提交到 GitHub skill 的确定性执行脚本（PowerShell 5 兼容，SSH 公钥认证）
 # 用法:
 #   预检:        .\push-github.ps1 -Check
 #   提交并推送:  .\push-github.ps1 -Message "改动说明"
@@ -10,7 +10,7 @@ param(
 $ErrorActionPreference = "Stop"
 # 走 443 端口的 SSH 官方通道：本机 hosts 将 github.com:22 屏蔽到 127.0.0.1，
 # 而 ssh.github.com 未被屏蔽，GitHub 官方支持经 ssh.github.com:443 的 SSH 认证
-$RepoUrl    = "ssh://git@ssh.github.com:443/ninini929/niminghao.git"
+$RepoUrl    = "ssh://git@ssh.github.com:443/123asdco/gejialei.git"
 $RemoteName = "github"   # origin 已被 Gitee 占用，GitHub 使用独立远程名
 $Branch     = "main"
 
