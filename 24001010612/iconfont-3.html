@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>需求导航 · 字体图标版（iconfont）</title>
+<!-- 本地 iconfont 字体（字体图标方式） -->
+<link rel="stylesheet" href="font/iconfont.css">
+<style>
+    :root {
+        --gjl_paper: #FAF8F3;
+        --gjl_ink: #211E1B;
+        --gjl_ink_soft: #6F675D;
+        --gjl_cinnabar: #AE2E24;
+        --gjl_rule: rgba(33, 30, 27, 0.16);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        background: var(--gjl_paper);
+        color: var(--gjl_ink);
+        font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+        font-size: 16px;
+        line-height: 1.75;
+        min-height: 100vh;
+        padding-bottom: 120px; /* 给固定底栏留位 */
+    }
+    .gjl_page {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 40px 22px 40px;
+    }
+    .gjl_head_title {
+        font-family: "KaiTi", "STKaiti", "SimSun", serif;
+        font-size: 28px;
+        font-weight: 400;
+        letter-spacing: 0.18em;
+        padding-bottom: 14px;
+        border-bottom: 2px solid var(--gjl_ink);
+    }
+    .gjl_head_sub { font-size: 14px; color: var(--gjl_ink_soft); margin-top: 10px; }
+    .gjl_head_code {
+        display: inline-block;
+        margin-top: 14px;
+        font-family: Consolas, monospace;
+        font-size: 13px;
+        color: var(--gjl_cinnabar);
+        background: rgba(174, 46, 36, 0.06);
+        padding: 5px 10px;
+    }
+    .gjl_demo_note {
+        margin-top: 26px;
+        font-size: 14px;
+        color: var(--gjl_ink_soft);
+        border-top: 1px solid var(--gjl_rule);
+        padding-top: 16px;
+    }
+    .gjl_links { margin-top: 22px; display: flex; gap: 26px; flex-wrap: wrap; }
+    .gjl_home_link, .gjl_alt_link {
+        color: var(--gjl_ink);
+        text-decoration: none;
+        font-size: 15px;
+        padding-bottom: 3px;
+        border-bottom: 2px solid var(--gjl_ink);
+    }
+    .gjl_home_link:hover, .gjl_alt_link:hover {
+        color: var(--gjl_cinnabar);
+        border-color: var(--gjl_cinnabar);
+    }
+    .gjl_home_link:focus-visible, .gjl_alt_link:focus-visible,
+    .gjl_tab:focus-visible {
+        outline: 2px dashed var(--gjl_cinnabar);
+        outline-offset: 3px;
+    }
+
+    /* ==== 固定底栏：flex 自适应宽度，4 项均分 ==== */
+    .gjl_tabbar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10;
+        display: flex;
+        background: var(--gjl_paper);
+        border-top: 1px solid var(--gjl_rule);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .gjl_tab {
+        flex: 1 1 25%;          /* 自适应宽度：4 项均分 */
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        padding: 9px 4px 8px;
+        text-decoration: none;
+        color: var(--gjl_ink_soft);
+        -webkit-tap-highlight-color: transparent;
+    }
+    .gjl_tab_icon {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 28px;
+        font-size: 24px;
+        line-height: 1;
+    }
+    .gjl_tab_label { font-size: 12px; letter-spacing: 0.06em; }
+    .gjl_tab_active { color: var(--gjl_cinnabar); }
+    .gjl_tab_active .gjl_tab_label { font-weight: 600; }
+    .gjl_tab:active { opacity: 0.75; }
+
+    /* ==== 徽章：数字 / 红点，钉在图标右上角 ==== */
+    .gjl_badge_num {
+        position: absolute;
+        top: -7px;
+        right: -16px;
+        min-width: 17px;
+        height: 17px;
+        padding: 0 4px;
+        border-radius: 9px;
+        background: var(--gjl_cinnabar);
+        color: #FAF8F3;
+        font-family: Consolas, monospace;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 17px;
+        text-align: center;
+        font-style: normal;
+    }
+    .gjl_badge_dot {
+        position: absolute;
+        top: -1px;
+        right: -9px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--gjl_cinnabar);
+    }
+</style>
+</head>
+<body>
+<div class="gjl_page">
+    <header>
+        <h1 class="gjl_head_title">需求图谱</h1>
+        <p class="gjl_head_sub">底部导航 · 字体图标版 —— 图标由 iconfont 字体文件渲染</p>
+        <code class="gjl_head_code">&lt;i class="iconfont icon-xxx"&gt;&lt;/i&gt;</code>
+    </header>
+
+    <p class="gjl_demo_note">
+        底栏固定于视口底部，四个项目以弹性布局均分宽度；数字徽章与红点钉在图标右上角。
+        点击下列项目可切换选中态。
+    </p>
+
+    <div class="gjl_links">
+        <a class="gjl_alt_link" href="iconfont-4.html">SVG 图纸版</a>
+        <a class="gjl_alt_link" href="iconfont-1.html">字学图谱</a>
+        <a class="gjl_home_link" href="index.html">返回首页</a>
+    </div>
+</div>
+
+<!-- 固定底栏：4 项，flex 均分 -->
+<nav class="gjl_tabbar" aria-label="底部导航">
+    <a class="gjl_tab gjl_tab_active" href="javascript:void(0)">
+        <span class="gjl_tab_icon"><i class="iconfont icon-a-wendangleibiexiao_huaban1fuben10"></i></span>
+        <span class="gjl_tab_label">设计</span>
+    </a>
+    <a class="gjl_tab" href="javascript:void(0)">
+        <span class="gjl_tab_icon">
+            <i class="iconfont icon-a-wendangleibiexiao_huaban1fuben11"></i>
+            <b class="gjl_badge_num">6</b>
+        </span>
+        <span class="gjl_tab_label">性能</span>
+    </a>
+    <a class="gjl_tab" href="javascript:void(0)">
+        <span class="gjl_tab_icon">
+            <i class="iconfont icon-a-wendangleibiexiao_huaban1fuben12"></i>
+            <b class="gjl_badge_num">99+</b>
+        </span>
+        <span class="gjl_tab_label">接口</span>
+    </a>
+    <a class="gjl_tab" href="javascript:void(0)">
+        <span class="gjl_tab_icon">
+            <i class="iconfont icon-a-wendangleibiexiao_huaban1fuben16"></i>
+            <b class="gjl_badge_dot"></b>
+        </span>
+        <span class="gjl_tab_label">安全</span>
+    </a>
+</nav>
+
+<script>
+    // 点击切换选中态
+    var gjl_tabs = document.querySelectorAll('.gjl_tab');
+    gjl_tabs.forEach(function (gjl_item) {
+        gjl_item.addEventListener('click', function () {
+            gjl_tabs.forEach(function (gjl_t) { gjl_t.classList.remove('gjl_tab_active'); });
+            gjl_item.classList.add('gjl_tab_active');
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<!--
+  作者：葛佳磊
+  建立时间：2026-11-02 14:26
+  使用模型：GLM-5.3-Flash
+  功能名称及简介：tab_complaint.html —— 新闻投诉三选项卡页面（最新投诉 / 官方回应 / 追踪调查）
+  说明：
+    - 三个选项卡：最新投诉、官方回应、追踪调查，第一个「最新投诉」默认选中
+    - JS 逻辑放在 js 文件夹，通过 <script src="js/gjl_tab.js"> 外部引用
+    - Tab 组件可复用，对外暴露 gjl_initTabs(tabBoxId, panelBoxId)
+    - 组件内部核心实现：事件监听 → 清除所有选项卡选中状态 → 设置当前元素选中状态
+    - 列表项目符号使用 img 文件夹中的 dot.gif 资源
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新闻投诉选项卡</title>
+<style>
+  :root {
+    --gjl_ink: #1f1f1f;
+    --gjl_red: #b32424;       /* 选中态文字 / 底部指示条颜色 */
+    --gjl_red_d: #8c1c1c;
+    --gjl_gray_bg: #eef0f2;   /* 未选中选项卡背景 */
+    --gjl_line: #d6d9dd;      /* 边框线 */
+    --gjl_card: #ffffff;
+    --gjl_page: #f5f6f8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+    background: var(--gjl_page); color: var(--gjl_ink); line-height: 1.6;
+    min-height: 100vh; padding: 24px;
+  }
+  .gjl_wrap { max-width: 520px; margin: 0 auto; }
+
+  /* 顶部：标题与回首页链接 */
+  .gjl_head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .gjl_head h1 { font-size: 20px; color: var(--gjl_red_d); }
+  .gjl_home_link {
+    font-size: 13px; font-weight: 600; color: var(--gjl_red); text-decoration: none;
+    border: 1px solid var(--gjl_red); border-radius: 16px; padding: 4px 12px; transition: all .18s;
+  }
+  .gjl_home_link:hover { background: var(--gjl_red); color: #fff; }
+
+  /* 选项卡容器 */
+  .gjl_card {
+    background: var(--gjl_card);
+    border: 1px solid var(--gjl_line);
+    border-top: 2px solid var(--gjl_line);
+  }
+
+  /* 选项卡按钮条 */
+  .gjl_tabs_box { display: flex; border-bottom: 1px solid var(--gjl_line); }
+  .gjl_tab {
+    flex: none; min-width: 92px; border: none; cursor: pointer;
+    padding: 10px 18px; font-size: 15px; color: var(--gjl_ink);
+    background: var(--gjl_gray_bg);
+    position: relative; transition: color .15s, background .15s;
+  }
+  .gjl_tab:hover { color: var(--gjl_red); }
+  .gjl_tab.gjl_active {
+    color: var(--gjl_red); font-weight: 700; background: var(--gjl_card);
+  }
+  .gjl_tab.gjl_active::after {   /* 选中态红色底部指示条 */
+    content: ""; position: absolute; left: 0; right: 0; bottom: -1px;
+    height: 3px; background: var(--gjl_red);
+  }
+
+  /* 面板区：默认隐藏，选中显示 */
+  .gjl_panel { display: none; padding: 14px 18px; }
+  .gjl_panel.gjl_active { display: block; }
+
+  /* 新闻列表：使用 img/dot.gif 作为项目符号 */
+  .gjl_news_list { list-style: none; }
+  .gjl_news_list li {
+    position: relative; padding-left: 16px;
+    padding-top: 8px; padding-bottom: 8px;
+    font-size: 14px; color: var(--gjl_ink);
+    border-bottom: 1px dashed #e3e5e8;
+    line-height: 1.5;
+  }
+  .gjl_news_list li:last-child { border-bottom: none; }
+  .gjl_news_list li::before {
+    content: ""; position: absolute; left: 2px; top: 16px;
+    width: 6px; height: 6px;
+    background: url("img/dot.gif") no-repeat center;
+    background-size: contain;
+  }
+  .gjl_news_list li:hover { color: var(--gjl_red); }
+</style>
+</head>
+<body>
+<div class="gjl_wrap">
+
+  <header class="gjl_head">
+    <h1>投诉监督台</h1>
+    <a class="gjl_home_link" href="index.html">返回首页</a>
+  </header>
+
+  <main class="gjl_card">
+    <!-- 选项卡按钮条：data-gjl-tab 的值 = 对应面板索引（从 0 开始） -->
+    <div class="gjl_tabs_box" id="gjl_complaintTabs" role="tablist">
+      <button class="gjl_tab gjl_active" data-gjl-tab="0">最新投诉</button>
+      <button class="gjl_tab" data-gjl-tab="1">官方回应</button>
+      <button class="gjl_tab" data-gjl-tab="2">追踪调查</button>
+    </div>
+
+    <!-- 内容面板：子元素顺序与按钮一一对应，第一个为默认面板 -->
+    <div id="gjl_complaintPanels">
+      <section class="gjl_panel gjl_active">
+        <ul class="gjl_news_list">
+          <li>北京火车站出租车乱象调查 司机称计价器坏</li>
+          <li>公园仙人掌遭游客“毁容” 一根仙人掌被刻</li>
+          <li>昆明现游客“辣手摧鸽” 网友谴责(组图)</li>
+          <li>四川一五星级公厕藏高端会所 因装修未</li>
+          <li>北京北海公园暗藏高端会所 被称“园中”</li>
+          <li>北京北海金丝楠木柱遭英文签名 破坏文物</li>
+          <li>北京动物园门票现“流氓” 门票遭“雪藏”</li>
+          <li>女子不满“无购物”投诉旅行社 称东西一样没买</li>
+          <li>老年参团游权益受损 旅行社被曝对老人</li>
+        </ul>
+      </section>
+
+      <section class="gjl_panel">
+        <ul class="gjl_news_list">
+          <li>大绿狗、猩猩助阵热浪 法官解读“山魈”是</li>
+          <li>国家旅游局回应天价餐：“团队游价格正</li>
+          <li>国家旅游局回应《旅游法》实施后旅行社困</li>
+          <li>国家旅游局称“旅游团费虚高”不属实 因接</li>
+          <li>解读新旅游法三 “语传” 扫货族可安心</li>
+          <li>《旅游法》将抑制“零负团费”和“门票经</li>
+          <li>文明旅游入旅游合同 行为指南和公约将作</li>
+          <li>天津二季度旅行社服务质量发布 投诉 8</li>
+          <li>敦煌：国家法定节假日所有景点免收门票</li>
+        </ul>
+      </section>
+
+      <section class="gjl_panel">
+        <ul class="gjl_news_list">
+          <li>《旅游法》实施半月 自费景区遭正规一日游</li>
+          <li>追踪香格里拉旅游乱象：涉事导游已</li>
+          <li>导游赚钱新“攻略” 逃离旅行社自己</li>
+          <li>九寨沟为何变成“死胡同”？—— 数千游客</li>
+          <li>九寨沟为何变成死胡同客滞留</li>
+          <li>旅游之尴尬：“游客”游博物馆、女士超性感进</li>
+          <li>记者暗访兵马俑景区：玉器店买玉 过期门票</li>
+          <li>眼看游客谢蒂卡转账 两女子怒怼大学生黑</li>
+          <li>39家旅游单位违法被罚1900万 购物店结盟</li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Tab 逻辑：外部引用 js 文件夹中的可复用组件 gjl_tab.js -->
+<script src="js/gjl_tab.js"></script>
+<script>
+  /* 作者：葛佳磊 | 建立时间：2026-11-02 14:26 | 使用模型：GLM-5.3-Flash
+     功能：页面初始化 —— 调用可复用组件 gjl_initTabs 绑定本页选项卡
+           组件内部已实现：事件监听 → 清除所有选中态 → 设置当前元素选中态 */
+  gjl_initTabs("gjl_complaintTabs", "gjl_complaintPanels");
+</script>
+</body>
+</html>

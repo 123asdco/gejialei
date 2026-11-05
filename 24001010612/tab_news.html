@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<!--
+  作者：葛佳磊
+  建立时间：2026-11-02 13:39
+  使用模型：GLM-5.3-Flash
+  功能名称及简介：tab_news.html —— 新闻 Tab 选项卡页面
+  说明：四个选项卡（国内新闻 / 省内新闻 / 国际新闻 / 最热新闻），
+        国内新闻为默认选中项；Tab 切换逻辑由 js/gjl_tab.js 提供，
+        该 JS 为可复用组件（gjl_initTabs），本页仅做初始化调用。
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新闻选项卡 · Tab 组件练习</title>
+<style>
+  :root {
+    --gjl_bg: #f4f6fa;
+    --gjl_card: #ffffff;
+    --gjl_ink: #1f2733;
+    --gjl_ink_soft: #5b6472;
+    --gjl_line: #e7eaf0;
+    --gjl_primary: #5b7cfa;
+    --gjl_primary_d: #3f5fd9;
+    --gjl_hot: #ff7a59;
+    --gjl_radius: 14px;
+    --gjl_shadow: 0 10px 30px rgba(20, 28, 48, .14);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+    background: var(--gjl_bg); color: var(--gjl_ink); line-height: 1.6;
+    min-height: 100vh; padding: 24px;
+  }
+  .gjl_wrap { max-width: 760px; margin: 0 auto; }
+
+  /* 顶部：标题与回首页链接 */
+  .gjl_head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .gjl_head h1 { font-size: 22px; }
+  .gjl_head .gjl_sub { color: var(--gjl_ink_soft); font-size: 13px; }
+  .gjl_home_link {
+    font-size: 13px; font-weight: 600; color: var(--gjl_primary); text-decoration: none;
+    border: 1px solid var(--gjl_primary); border-radius: 20px; padding: 5px 14px; transition: all .18s;
+  }
+  .gjl_home_link:hover { background: var(--gjl_primary); color: #fff; }
+
+  /* 选项卡整体卡片 */
+  .gjl_tab_card { background: var(--gjl_card); border-radius: var(--gjl_radius); box-shadow: var(--gjl_shadow); overflow: hidden; }
+
+  /* 选项卡按钮条 */
+  .gjl_tabs_box { display: flex; border-bottom: 1px solid var(--gjl_line); background: #f9fafc; }
+  .gjl_tab {
+    flex: 1; border: none; background: transparent; cursor: pointer;
+    padding: 14px 8px; font-size: 15px; color: var(--gjl_ink_soft);
+    position: relative; transition: color .18s, background .18s;
+  }
+  .gjl_tab:hover { color: var(--gjl_primary); background: #f1f4ff; }
+  .gjl_tab.gjl_active { color: var(--gjl_primary); font-weight: 700; background: var(--gjl_card); }
+  .gjl_tab.gjl_active::after {          /* 选中态底部指示条 */
+    content: ""; position: absolute; left: 20%; right: 20%; bottom: -1px;
+    height: 3px; border-radius: 3px; background: var(--gjl_primary);
+  }
+  .gjl_tab.gjl_hot_tab.gjl_active { color: var(--gjl_hot); }
+  .gjl_tab.gjl_hot_tab.gjl_active::after { background: var(--gjl_hot); }
+
+  /* 面板区：默认隐藏，选中显示 */
+  .gjl_panel { display: none; padding: 18px 22px; }
+  .gjl_panel.gjl_active { display: block; animation: gjl_fade .28s ease; }
+  @keyframes gjl_fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* 新闻列表 */
+  .gjl_news_list { list-style: none; }
+  .gjl_news_list li {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 10px 2px; border-bottom: 1px dashed var(--gjl_line); font-size: 14px;
+  }
+  .gjl_news_list li:last-child { border-bottom: none; }
+  .gjl_news_list .gjl_tag {
+    flex: none; font-size: 12px; color: var(--gjl_primary);
+    border: 1px solid currentColor; border-radius: 4px; padding: 0 6px;
+  }
+  .gjl_news_list .gjl_time { margin-left: auto; flex: none; color: var(--gjl_ink_soft); font-size: 12px; }
+  .gjl_panel_foot { margin-top: 12px; text-align: right; font-size: 12px; color: var(--gjl_ink_soft); }
+
+  footer.gjl_foot { text-align: center; color: var(--gjl_ink_soft); font-size: 12px; padding: 16px 0; }
+</style>
+</head>
+<body>
+<div class="gjl_wrap">
+
+  <header class="gjl_head">
+    <div>
+      <h1>今日要闻</h1>
+      <div class="gjl_sub">Tab 选项卡练习 · 切换逻辑见 js/gjl_tab.js（可复用组件）</div>
+    </div>
+    <a class="gjl_home_link" href="index.html">返回首页</a>
+  </header>
+
+  <main class="gjl_tab_card">
+    <!-- 选项卡按钮条：data-gjl-tab 的值 = 面板索引（从 0 开始） -->
+    <div class="gjl_tabs_box" id="gjl_newsTabs" role="tablist">
+      <button class="gjl_tab gjl_active" data-gjl-tab="0">国内新闻</button>
+      <button class="gjl_tab" data-gjl-tab="1">省内新闻</button>
+      <button class="gjl_tab" data-gjl-tab="2">国际新闻</button>
+      <button class="gjl_tab gjl_hot_tab" data-gjl-tab="3">最热新闻</button>
+    </div>
+
+    <!-- 内容面板：子元素顺序与按钮一一对应 -->
+    <div id="gjl_newsPanels">
+      <section class="gjl_panel gjl_active">
+        <ul class="gjl_news_list">
+          <li><span class="gjl_tag">国内</span>全国秋粮收获过八成，主产区机械化收割进度快于往年<span class="gjl_time">09:20</span></li>
+          <li><span class="gjl_tag">国内</span>新一轮降温预警发布，北方多地迎来今冬第一场雪<span class="gjl_time">10:05</span></li>
+          <li><span class="gjl_tag">国内</span>多地推出消费补贴新举措，带动服务零售持续回暖<span class="gjl_time">11:32</span></li>
+          <li><span class="gjl_tag">国内</span>国家层面再部署：推进中小企业数字化转型试点扩围<span class="gjl_time">13:47</span></li>
+        </ul>
+        <p class="gjl_panel_foot">共 4 条 · 更新于 13:47</p>
+      </section>
+
+      <section class="gjl_panel">
+        <ul class="gjl_news_list">
+          <li><span class="gjl_tag">省内</span>我省出台新政策，支持高校毕业生基层就业创业<span class="gjl_time">08:45</span></li>
+          <li><span class="gjl_tag">省内</span>全省高速公路服务区完成智能化改造，充电桩实现全覆盖<span class="gjl_time">10:18</span></li>
+          <li><span class="gjl_tag">省内</span>省运会进入倒计时，主场馆通过竣工验收<span class="gjl_time">14:02</span></li>
+        </ul>
+        <p class="gjl_panel_foot">共 3 条 · 更新于 14:02</p>
+      </section>
+
+      <section class="gjl_panel">
+        <ul class="gjl_news_list">
+          <li><span class="gjl_tag">国际</span>多国代表呼吁加强数字经济领域国际合作<span class="gjl_time">07:56</span></li>
+          <li><span class="gjl_tag">国际</span>国际航展闭幕，绿色低碳机型成为展会焦点<span class="gjl_time">12:11</span></li>
+          <li><span class="gjl_tag">国际</span>海外高校访问团开启秋季巡讲，留学交流热度回升<span class="gjl_time">15:30</span></li>
+        </ul>
+        <p class="gjl_panel_foot">共 3 条 · 更新于 15:30</p>
+      </section>
+
+      <section class="gjl_panel">
+        <ul class="gjl_news_list">
+          <li><span class="gjl_tag">最热</span>高校课堂引入 AI 助教，学生出勤率与互动率双提升<span class="gjl_time">13:05</span></li>
+          <li><span class="gjl_tag">最热</span>城市马拉松本周末开跑，赛道沿线实施临时交通管制<span class="gjl_time">13:58</span></li>
+          <li><span class="gjl_tag">最热</span>一部手机游全省平台上线，首日访问量突破百万<span class="gjl_time">16:20</span></li>
+        </ul>
+        <p class="gjl_panel_foot">共 3 条 · 更新于 16:20</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="gjl_foot">高级网页设计课堂实践 · Tab 选项卡组件（可复用）</footer>
+</div>
+
+<!-- Tab 逻辑：外部引用 js 文件夹中的可复用组件 -->
+<script src="js/gjl_tab.js"></script>
+<script>
+  /* 作者：葛佳磊 | 建立时间：2026-11-02 13:39 | 使用模型：GLM-5.3-Flash
+     功能：页面初始化 —— 调用可复用组件 gjl_initTabs 绑定本页选项卡 */
+  gjl_initTabs("gjl_newsTabs", "gjl_newsPanels");
+</script>
+</body>
+</html>
