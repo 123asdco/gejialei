@@ -117,3 +117,4 @@ dist
 
 # Trae 临时分享包
 /.trae-html-share-packages/
+**/.trae-html-share-packages/
