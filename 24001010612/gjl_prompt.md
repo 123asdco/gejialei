@@ -284,4 +284,49 @@ AGENTS.md 所有说明、检查条目统一简体中文；文件路径、HTML、
 第2轮补上clickable: true圆点可点击跳转，配效果图+验证文字+代码对比+中文需求翻译参数表）
 ```
 
+**两轮对照详细记录：**
+
+**第 1 轮提示词（漏了需求）：**
+```
+帮我写一个 Swiper 轮播初始化代码，要能循环播放，
+会自动翻页，底部有圆点分页可以点击，用 cube 3D 效果。
+```
+AI 输出的 pagination 配置（漏了 clickable）：
+```js
+pagination: {
+  el: '#wyPagBad'
+}
+```
+效果：圆点只能看不能点，点击第 3 个圆点没有跳转。
+
+**第 2 轮提示词（补齐需求）：**
+```
+使用 Swiper 11 初始化 #wySw4 轮播，严格按以下要求配置：
+1. loop: true —— 无缝循环
+2. autoplay: { delay: 3200, disableOnInteraction: false }
+   —— 每 3.2 秒自动翻页，用户手动操作后自动播放不停止
+3. pagination: { el: "#wyPag4", clickable: true }
+   —— 圆点分页器，且可点击跳转
+4. effect: "cube" —— 初始效果为 3D 立方体
+5. speed: 800 —— 切换动画时长 800 毫秒
+```
+AI 输出的 pagination 配置（补上 clickable）：
+```js
+pagination: {
+  el: '#wyPagGood',
+  clickable: true
+}
+```
+效果：圆点可点击跳转，点击第 3 个圆点已跳转到第 3 张。
+
+**中文需求翻译成参数对照表：**
+
+| 老师的要求 | 对应参数 | 说明 |
+|-----------|---------|------|
+| 无缝循环 | `loop: true` | 首尾相接，滑到最后一张后接第一张 |
+| 3.2 秒自动翻页 | `autoplay: { delay: 3200 }` | delay 单位毫秒，3200 = 3.2 秒 |
+| 手动操作后不停止 | `autoplay: { disableOnInteraction: false }` | 默认 true，用户滑动后自动播放停止 |
+| 圆点分页器可点击 | `pagination: { clickable: true }` | 默认 false，圆点只显示不可点 |
+| 初始效果为 cube | `effect: 'cube'` | 3D 立方体切换效果 |
+
 ---
