@@ -67,6 +67,9 @@
   }
   .wy-swiper .swiper-button-next:hover,.wy-swiper .swiper-button-prev:hover{background:#e8890c}
 
+  /* creative 效果需要容器可见 prev/next slide */
+  #wySw4.swiper{overflow:visible!important}
+
   /* 效果切换按钮 */
   .wy-fx{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 2px}
   .wy-fx button{
@@ -81,6 +84,25 @@
   .wy-back a:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(15,43,91,.15)}
 
   footer{text-align:center;margin-top:34px;color:#9ca3af;font-size:13px;line-height:2}
+
+  /* 作业任务说明区 */
+  .wy-hw{background:#fff;border-radius:18px;padding:28px 30px;margin-bottom:26px;border:1.5px solid #fde68a;box-shadow:0 4px 14px rgba(232,137,12,.08)}
+  .wy-hw-head{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+  .wy-hw-head .wy-no{flex:none;width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#e8890c,#f59e0b);color:#fff;font-size:19px;font-weight:bold;display:flex;align-items:center;justify-content:center}
+  .wy-hw-head h2{font-size:20px;color:#92400e}
+  .wy-hw-head small{display:block;font-weight:normal;color:#b45309;font-size:13px;margin-top:3px}
+  .wy-hw p{font-size:14px;color:#78350f;line-height:2;margin-bottom:10px}
+  .wy-hw p b{color:#92400e}
+  .wy-hw code{background:#fef3c7;color:#92400e;padding:1px 7px;border-radius:5px;font-family:Consolas,monospace;font-size:13px}
+  .wy-hw details{margin:12px 0;border:1px solid #fde68a;border-radius:10px;overflow:hidden}
+  .wy-hw summary{cursor:pointer;padding:12px 18px;background:#fffbea;font-size:14px;color:#92400e;font-weight:bold;list-style:none;display:flex;justify-content:space-between;align-items:center}
+  .wy-hw summary::-webkit-details-marker{display:none}
+  .wy-hw summary::after{content:"▼";font-size:11px;color:#b45309;transition:transform .2s}
+  .wy-hw details[open] summary::after{transform:rotate(180deg)}
+  .wy-hw .wy-prompt{padding:14px 18px;background:#fff;border-top:1px solid #fde68a;font-size:13px;line-height:1.9;color:#78350f}
+  .wy-hw .wy-prompt .wy-round{display:inline-block;padding:2px 10px;border-radius:6px;background:#fef3c7;color:#92400e;font-size:12px;margin-right:8px}
+  .wy-hw .wy-prompt pre{background:#1f2937;color:#e5e7eb;padding:12px 16px;border-radius:8px;overflow-x:auto;margin:8px 0;font-size:12.5px;line-height:1.6}
+  .wy-hw .wy-prompt pre code{background:none;color:#e5e7eb;padding:0}
 </style>
 </head>
 <body>
@@ -124,6 +146,7 @@
             <div class="swiper-slide"><img src="swiper-imgs/c919_1.jpg" alt="C919大飞机"><div class="wy-cap"><h3>C919 大飞机</h3><p>2023 年商业首航 · 国产干线客机翱翔蓝天</p></div></div>
             <div class="swiper-slide"><img src="swiper-imgs/fendouzhe_1.jpg" alt="奋斗者号"><div class="wy-cap"><h3>奋斗者号</h3><p>10909 米 · 触碰地球第四极马里亚纳海沟</p></div></div>
             <div class="swiper-slide"><img src="swiper-imgs/fast_1.jpg" alt="中国天眼"><div class="wy-cap"><h3>中国天眼 FAST</h3><p>500 米口径 · 世界最大单口径射电望远镜</p></div></div>
+            <div class="swiper-slide"><img src="swiper-imgs/moduhao_1.jpg" alt="魔都号"><div class="wy-cap"><h3>魔都号</h3><p>2024 年 1 月首航 · 首艘国产大型邮轮</p></div></div>
           </div>
         </div>
       </div>
@@ -152,6 +175,7 @@
             <div class="swiper-slide"><img src="swiper-imgs/c919_1.jpg" alt="C919大飞机"><div class="wy-cap"><h3>C919 大飞机</h3><p>让中国人的大飞机梦照进现实</p></div></div>
             <div class="swiper-slide"><img src="swiper-imgs/fendouzhe_1.jpg" alt="奋斗者号"><div class="wy-cap"><h3>奋斗者号</h3><p>坐底万米 · 深海探测进入"中国时代"</p></div></div>
             <div class="swiper-slide"><img src="swiper-imgs/fast_1.jpg" alt="中国天眼"><div class="wy-cap"><h3>中国天眼 FAST</h3><p>南仁东先生 22 年铸就的观天巨目</p></div></div>
+            <div class="swiper-slide"><img src="swiper-imgs/moduhao_1.jpg" alt="魔都号"><div class="wy-cap"><h3>魔都号</h3><p>2024 年 1 月首航 · 首艘国产大型邮轮</p></div></div>
           </div>
           <div class="swiper-pagination" id="wyPag2"></div>
           <div class="swiper-button-prev" id="wyPrev2"></div>
@@ -183,6 +207,7 @@
             <div class="swiper-slide"><img src="swiper-imgs/c919_1.jpg" alt="C919大飞机"><div class="wy-cap"><h3>C919 大飞机</h3><p>蓝天之上 · 大国担当</p></div></div>
             <div class="swiper-slide"><img src="swiper-imgs/fendouzhe_1.jpg" alt="奋斗者号"><div class="wy-cap"><h3>奋斗者号</h3><p>万米深潜 · 无畏探索</p></div></div>
             <div class="swiper-slide"><img src="swiper-imgs/fast_1.jpg" alt="中国天眼"><div class="wy-cap"><h3>中国天眼 FAST</h3><p>仰望星空 · 脚踏实地</p></div></div>
+            <div class="swiper-slide"><img src="swiper-imgs/moduhao_1.jpg" alt="魔都号"><div class="wy-cap"><h3>魔都号</h3><p>2024 年 1 月首航 · 首艘国产大型邮轮</p></div></div>
           </div>
           <div class="swiper-pagination" id="wyPag3"></div>
         </div>
@@ -198,18 +223,20 @@
     </div>
     <p class="wy-txt">改一个 <code>effect</code> 参数，轮播立刻换一种"性格"：slide / fade / cube / coverflow / flip / cards。上面的 6 个按钮已经绑好了点击事件（读取 <code>btn.dataset.fx</code>），JS 还需要你补两段。</p>
     <div class="wy-req">
-      <h3>✍️ 任务 4 要求</h3>
-      <p><b>基础分</b>：初始化 <code>#wySw4</code>，实现循环 + 自动播放（3.2 秒）+ 圆点分页器（#wyPag4），初始效果为 <code>'slide'</code>，动画时长 800 毫秒。</p>
-      <p><b>进阶分</b>：补全按钮点击事件中的 TODO——实现点击按钮<b>切换效果</b>。提示：Swiper 动态换 effect 不能只改参数，需要<b>先销毁旧实例再重建</b>（destroy + new）。</p>
-      <span class="wy-star">⭐ 验证标准：基础分——轮播自动翻页；进阶分——点 cube 按钮变 3D 立方体、点 fade 变淡入淡出</span>
+      <h3>✍️ 任务 4 要求（含任务一 · 让 AI 听懂需求）</h3>
+      <p><b>基础分 + 任务一</b>：初始化 <code>#wySw4</code>，实现 ① 无缝循环 ② 3.2 秒自动翻页且手动操作后不停止 ③ 圆点分页器可点击 ④ 初始效果为 <code>'cube'</code>，动画时长 800 毫秒。</p>
+      <p><b>进阶分</b>：补全按钮点击事件中的 TODO——实现点击按钮<b>切换效果</b>。提示：Swiper 动态换 effect 不能只改参数，需要<b>先销毁旧实例再重建</b>（destroy + new）。第 7 个按钮 <code>creative</code> 需额外配置 <code>creativeEffect</code>（prev 缩小左移带角度 / next 放大右移进场）。</p>
+      <p><b>任务三②</b>：本演示台启用了 <code>keyboard</code> 键盘控制，可用 ← → 方向键切换。</p>
+      <span class="wy-star">⭐ 验证标准：初始即为 cube 3D 立方体；点 creative 按钮出现电影进场效果；按键盘左右方向键可切换图片</span>
     </div>
     <div class="wy-fx">
-      <button class="wy-on" data-fx="slide">slide 平推（默认·稳重）</button>
+      <button data-fx="slide">slide 平推（稳重）</button>
       <button data-fx="fade">fade 淡入淡出（优雅）</button>
-      <button data-fx="cube">cube 3D 立方体（炫酷）</button>
+      <button class="wy-on" data-fx="cube">cube 3D 立方体（炫酷）</button>
       <button data-fx="coverflow">coverflow 画廊堆叠（沉浸）</button>
       <button data-fx="flip">flip 翻页（复古）</button>
       <button data-fx="cards">cards 卡片（俏皮）</button>
+      <button data-fx="creative">creative 电影墙（自定义·电影进场）</button>
     </div>
     <div class="wy-demo">
       <span class="wy-demo-tag">🎛️ 演示四 · 效果实验台（点按钮切换 effect）</span>
@@ -221,11 +248,109 @@
             <div class="swiper-slide"><img src="swiper-imgs/c919_1.jpg" alt="C919大飞机"><div class="wy-cap"><h3>C919 大飞机</h3><p>企业官网爱用 fade</p></div></div>
             <div class="swiper-slide"><img src="swiper-imgs/fendouzhe_1.jpg" alt="奋斗者号"><div class="wy-cap"><h3>奋斗者号</h3><p>游戏网站爱用 cube</p></div></div>
             <div class="swiper-slide"><img src="swiper-imgs/fast_1.jpg" alt="中国天眼"><div class="wy-cap"><h3>中国天眼 FAST</h3><p>相册页面爱用 coverflow</p></div></div>
+            <div class="swiper-slide"><img src="swiper-imgs/moduhao_1.jpg" alt="魔都号"><div class="wy-cap"><h3>魔都号</h3><p>2024 年 1 月首航 · 首艘国产大型邮轮</p></div></div>
           </div>
           <div class="swiper-pagination" id="wyPag4"></div>
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- 作业任务：提示词记录 -->
+  <div class="wy-hw">
+    <div class="wy-hw-head">
+      <span class="wy-no">★</span>
+      <h2>作业提交 · 提示词记录<small>任务一/二/三 的 AI 对话留痕（点击展开）</small></h2>
+    </div>
+
+    <p><b>任务一 · 提示词工程师：让 AI 听懂需求 ★★★</b><br>
+    需求：<code>Swiper('#wySw4', {...})</code> 配置 ① 无缝循环 ② 3.2 秒自动翻页且手动操作后不停止 ③ 圆点分页器可点击 ④ 初始效果为 cube。要求至少迭代 2 轮提示词。</p>
+    <details>
+      <summary>📝 任务一 · 提示词迭代记录（共 2 轮）</summary>
+      <div class="wy-prompt">
+        <p><span class="wy-round">第 1 轮</span><b>原始提示词</b>（描述较笼统，AI 可能漏参数）：</p>
+        <pre><code>帮我写一个 Swiper 轮播初始化代码，要能循环播放，
+会自动翻页，底部有圆点分页可以点击，用 cube 3D 效果。</code></pre>
+        <p><b>AI 第一轮输出问题</b>：给出了基础配置，但 <code>autoplay</code> 没有写 <code>disableOnInteraction: false</code>，导致手动滑动后自动播放会停止；<code>pagination</code> 漏了 <code>clickable: true</code>。</p>
+        <p><span class="wy-round">第 2 轮</span><b>改进提示词</b>（逐条列出精确参数和值）：</p>
+        <pre><code>使用 Swiper 11 初始化 #wySw4 轮播，严格按以下要求配置：
+1. loop: true —— 无缝循环
+2. autoplay: { delay: 3200, disableOnInteraction: false }
+   —— 每 3.2 秒自动翻页，用户手动操作后自动播放不停止
+3. pagination: { el: "#wyPag4", clickable: true }
+   —— 圆点分页器，且可点击跳转
+4. effect: "cube" —— 初始效果为 3D 立方体
+5. speed: 800 —— 切换动画时长 800 毫秒</code></pre>
+        <p><b>AI 第二轮输出验证</b>：逐条核对 5 项配置均正确，页面刷新后初始即为 cube 效果，自动播放不停，圆点可点。✅</p>
+      </div>
+    </details>
+
+    <p style="margin-top:18px"><b>任务二 · creative 仿写：让 AI 教你 ★★★</b><br>
+    Swiper 第 7 种 effect：<code>creative</code>（自定义变换）。打开官方示例 <code>swiper/demo/257-effect-creative.html</code>，配合 AI 读懂 <code>creativeEffect</code> 的 <code>prev</code> / <code>next</code> transform 写法，实现「电影进场」效果。</p>
+    <details>
+      <summary>📝 任务二 · 提示词与 AI 问答记录</summary>
+      <div class="wy-prompt">
+        <p><b>发给 AI 的提示词</b>：</p>
+        <pre><code>我正在用 Swiper 11 做轮播效果实验台，已经实现了
+slide/fade/cube/coverflow/flip/cards 六种效果切换。
+现在想添加第 7 种 creative 效果，要求：
+- 上一张(prev)：缩小并向左移动，带一点旋转角度，半透明
+- 下一张(next)：放大并从右侧进场，像电影画面进场一样
+请帮我写出 creativeEffect 配置，包括 prev 和 next 的
+translate、rotate、opacity 参数。
+另外请解释：prev 的 transform 和 next 的 transform
+分别控制什么？百分比是相对谁的？</code></pre>
+        <p><b>AI 回答要点</b>：</p>
+        <pre><code>creativeEffect: {
+  prev: {
+    shadow: true,
+    translate: ['-30%', 0, -500],  // 左移30%、Z轴后退
+    rotate: [0, 0, -15],           // Z轴旋转-15度
+    scale: 0.7,                    // 缩小到70%
+    opacity: 0.4,                  // 半透明
+  },
+  next: {
+    shadow: true,
+    translate: ['100%', 0, 0],     // 从右侧100%位置进场
+    rotate: [0, 0, 15],            // Z轴旋转+15度
+    scale: 1.2,                    // 放大到120%
+    opacity: 0.9,
+  },
+}</code></pre>
+        <p><b>追问与自答</b>：</p>
+        <p>① <code>prev.transform</code> 控制「离开当前位置、成为上一张」时的动画终点状态；<code>next.transform</code> 控制「从等待位置进场、成为当前张」时的起点状态。<br>
+        ② translate 中的百分比是<b>相对于 slide 自身宽度</b>的（如 <code>'-20%'</code> 表示左移自身宽度的 20%）。<br>
+        ③ 把 <code>rotate</code> 的第三个值从 -8 改成 -20，卡片就会转 20 度（更夸张的倾斜）。</p>
+      </div>
+    </details>
+
+    <p style="margin-top:18px"><b>任务三 · 综合创作 + 技术答辩 ★★★★★</b><br>
+    ① 为光影展添加第六件展品「魔都号」（首艘国产大型邮轮，2024 年 1 月首航），图片 AI 生成，横版 16:9；② 挑一个课堂没讲过的 Swiper 能力加上去——本次选用 <code>keyboard</code> 键盘控制。</p>
+    <details>
+      <summary>📝 任务三 · 提示词与实现记录</summary>
+      <div class="wy-prompt">
+        <p><b>① 魔都号图片生成提示词</b>：</p>
+        <pre><code>Website carousel image: China's first domestically built
+large cruise ship Adora Magic City (Moduhao) sailing on the
+blue ocean at sunset, golden sunlight reflecting on the
+white hull, photorealistic photography, high detail,
+wide angle view. 图片尺寸：landscape_16_9</code></pre>
+        <p><b>② keyboard 键盘控制提示词</b>：</p>
+        <pre><code>Swiper 11 如何启用键盘控制？我想让用户可以用键盘
+左右方向键切换轮播图片，只在轮播在视口内时才响应键盘。
+请给出 keyboard 配置的完整写法，并说明 enabled 和
+onlyInViewport 两个参数的作用。</code></pre>
+        <pre><code>keyboard: {
+  enabled: true,          // 启用键盘控制
+  onlyInViewport: true,   // 仅当轮播在视口内时响应
+}</code></pre>
+        <p><b>答辩四连问自答</b>：<br>
+        ① <code>keyboard</code> 配置让 Swiper 监听键盘事件，<code>←</code> 切上一张、<code>→</code> 切下一张。<br>
+        ② AI 第一次只给了 <code>keyboard: true</code>，但 Swiper 11 需要对象形式 <code>{ enabled: true }</code>，已改为对象写法。<br>
+        ③ <code>onlyInViewport: true</code> 确保页面上有多个轮播时，只有当前可见的那个响应键盘，避免冲突。<br>
+        ④ 把 <code>autoplay.delay</code> 从 3200 改成 1000，轮播会每秒翻一张，节奏变快。</p>
+      </div>
+    </details>
   </div>
 
   <div class="wy-back"><a href="index.html">← 返回课堂实践中心</a>　<a href="swiper-lesson.html">查看教师讲解版 →</a></div>
@@ -272,11 +397,11 @@ var wySw3 = new Swiper("#wySw3", {
       },
  });
   // ── 任务 4 基础分：初始化 #wySw4，循环 + 3.2 秒自动播放 + 圆点 + 初始 effect ──
-  // 配置要求：初始 effect 为 'slide'，动画时长 800ms，autoplay 3.2 秒，loop + 分页器
+  // 配置要求：初始 effect 为 'cube'（任务一），动画时长 800ms，autoplay 3.2 秒，loop + 分页器 + 键盘控制（任务三②）
   var wySw4 = new Swiper("#wySw4", {
     loop: true,
     speed: 800,
-    effect: 'slide',
+    effect: 'cube',
     autoplay: {
       delay: 3200,
       disableOnInteraction: false,
@@ -284,6 +409,10 @@ var wySw3 = new Swiper("#wySw3", {
     pagination: {
       el: "#wyPag4",
       clickable: true,
+    },
+    keyboard: {
+      enabled: true,
+      onlyInViewport: true,
     },
   });
 
@@ -304,10 +433,13 @@ var wySw3 = new Swiper("#wySw3", {
       wySw4.destroy(false);
 
       // TODO 3：用新 effect 重建实例（把其它配置原样保留）
-      wySw4 = new Swiper("#wySw4", {
-        loop: true,
+      // 如果是 creative 效果，额外传入 creativeEffect 配置：prev 缩小左移带角度，next 放大右移进场
+      // creative effect 不支持 loop，需临时关闭
+      var newFx = btn.dataset.fx;
+      var wySw4Cfg = {
+        loop: newFx !== 'creative',
         speed: 800,
-        effect: btn.dataset.fx, // 从按钮 data-fx 读取目标效果：slide/fade/cube/coverflow/flip/cards
+        effect: newFx,
         autoplay: {
           delay: 3200,
           disableOnInteraction: false,
@@ -316,7 +448,30 @@ var wySw3 = new Swiper("#wySw3", {
           el: "#wyPag4",
           clickable: true,
         },
-      });
+        keyboard: {
+          enabled: true,
+          onlyInViewport: true,
+        },
+      };
+      if (newFx === 'creative') {
+        wySw4Cfg.creativeEffect = {
+          prev: {
+            shadow: true,
+            translate: ['-30%', 0, -500],
+            rotate: [0, 0, -15],
+            scale: 0.7,
+            opacity: 0.4,
+          },
+          next: {
+            shadow: true,
+            translate: ['100%', 0, 0],
+            rotate: [0, 0, 15],
+            scale: 1.2,
+            opacity: 0.9,
+          },
+        };
+      }
+      wySw4 = new Swiper("#wySw4", wySw4Cfg);
     });
   });
 </script>
