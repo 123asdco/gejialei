@@ -263,8 +263,8 @@
       <h3>✍️ 任务 4 要求（含任务一 · 让 AI 听懂需求）</h3>
       <p><b>基础分 + 任务一</b>：初始化 <code>#wySw4</code>，实现 ① 无缝循环 ② 3.2 秒自动翻页且手动操作后不停止 ③ 圆点分页器可点击 ④ 初始效果为 <code>'cube'</code>，动画时长 800 毫秒。</p>
       <p><b>进阶分</b>：补全按钮点击事件中的 TODO——实现点击按钮<b>切换效果</b>。提示：Swiper 动态换 effect 不能只改参数，需要<b>先销毁旧实例再重建</b>（destroy + new）。第 7 个按钮 <code>creative</code> 需额外配置 <code>creativeEffect</code>（prev 缩小左移带角度 / next 放大右移进场）。</p>
-      <p><b>任务三②</b>：本演示台启用了 <code>keyboard</code> 键盘控制，可用 ← → 方向键切换。</p>
-      <span class="wy-star">⭐ 验证标准：初始即为 cube 3D 立方体；点 creative 按钮出现电影进场效果；按键盘左右方向键可切换图片</span>
+      <p><b>任务三②</b>：本演示台启用了 <code>keyboard</code> 键盘控制（← → 方向键）和 <code>mousewheel</code> 滚轮切换（第 8 个按钮），均为课堂未讲的超纲能力。</p>
+      <span class="wy-star">⭐ 验证标准：初始即为 cube 3D 立方体；点 creative 按钮出现电影进场效果；按键盘左右方向键可切换图片；点 mousewheel 按钮后可用鼠标滚轮切换</span>
     </div>
     <div class="wy-fx">
       <button data-fx="slide">slide 平推（稳重）</button>
@@ -274,6 +274,7 @@
       <button data-fx="flip">flip 翻页（复古）</button>
       <button data-fx="cards">cards 卡片（俏皮）</button>
       <button data-fx="creative">creative 电影墙（自定义·电影进场）</button>
+      <button data-fx="mousewheel">mousewheel 滚轮切换（超纲·任务三）</button>
     </div>
     <div class="wy-demo">
       <span class="wy-demo-tag">🎛️ 演示四 · 效果实验台（点按钮切换 effect）</span>
@@ -444,7 +445,7 @@ translate、rotate、opacity 参数。
     </details>
 
     <p style="margin-top:18px"><b>任务三 · 综合创作 + 技术答辩 ★★★★★</b><br>
-    ① 为光影展添加第六件展品「魔都号」（首艘国产大型邮轮，2024 年 1 月首航），图片 AI 生成，横版 16:9；② 挑一个课堂没讲过的 Swiper 能力加上去——本次选用 <code>keyboard</code> 键盘控制。</p>
+    ① 为光影展添加第六件展品「魔都号」（首艘国产大型邮轮，2024 年 1 月首航），图片 AI 生成，横版 16:9；② 挑课堂没讲过的 Swiper 能力加上去——本次选用 <code>keyboard</code> 键盘控制 + <code>mousewheel</code> 滚轮切换（参考官方示例 <code>211-slides-per-group-skip.html</code>）。</p>
     <details>
       <summary>📝 任务三 · 提示词与实现记录</summary>
       <div class="wy-prompt">
@@ -463,10 +464,20 @@ onlyInViewport 两个参数的作用。</code></pre>
   enabled: true,          // 启用键盘控制
   onlyInViewport: true,   // 仅当轮播在视口内时响应
 }</code></pre>
+        <p><b>③ mousewheel 滚轮切换提示词（参考 211-slides-per-group-skip.html）</b>：</p>
+        <pre><code>Swiper 11 如何启用鼠标滚轮切换？我想让用户在轮播上
+滚动鼠标滚轮就能切换上一张/下一张。请给出 mousewheel
+配置的完整写法，并说明 enabled、sensitivity、
+releaseOnEdges 三个参数的作用。</code></pre>
+        <pre><code>mousewheel: {
+  enabled: true,          // 启用滚轮控制
+  sensitivity: 1,         // 每滚动一格切换一张（数值越大越灵敏）
+  releaseOnEdges: false,  // 首尾是否释放滚轮事件给页面
+}</code></pre>
         <p><b>答辩四连问自答</b>：<br>
-        ① <code>keyboard</code> 配置让 Swiper 监听键盘事件，<code>←</code> 切上一张、<code>→</code> 切下一张。<br>
-        ② AI 第一次只给了 <code>keyboard: true</code>，但 Swiper 11 需要对象形式 <code>{ enabled: true }</code>，已改为对象写法。<br>
-        ③ <code>onlyInViewport: true</code> 确保页面上有多个轮播时，只有当前可见的那个响应键盘，避免冲突。<br>
+        ① <code>keyboard</code> 配置让 Swiper 监听键盘事件，<code>←</code> 切上一张、<code>→</code> 切下一张；<code>mousewheel</code> 配置让 Swiper 监听滚轮事件，向上滚切上一张、向下滚切下一张。<br>
+        ② AI 第一次只给了 <code>keyboard: true</code>，但 Swiper 11 需要对象形式 <code>{ enabled: true }</code>，已改为对象写法；mousewheel 同理需要对象形式。<br>
+        ③ <code>onlyInViewport: true</code> 确保页面上有多个轮播时，只有当前可见的那个响应键盘；<code>sensitivity: 1</code> 控制滚轮灵敏度，数值越大每滚一格切换的张数越多。<br>
         ④ 把 <code>autoplay.delay</code> 从 3200 改成 1000，轮播会每秒翻一张，节奏变快。</p>
       </div>
     </details>
@@ -566,11 +577,13 @@ var wySw3 = new Swiper("#wySw3", {
       // TODO 3：用新 effect 重建实例（把其它配置原样保留）
       // 如果是 creative 效果，额外传入 creativeEffect 配置：prev 缩小左移带角度，next 放大右移进场
       // creative effect 不支持 loop，需临时关闭
+      // mousewheel 不是 effect 而是交互模块：点击后用 slide 效果 + 启用滚轮切换
       var newFx = btn.dataset.fx;
+      var isMousewheel = newFx === 'mousewheel';
       var wySw4Cfg = {
         loop: newFx !== 'creative',
         speed: 800,
-        effect: newFx,
+        effect: isMousewheel ? 'slide' : newFx,
         autoplay: {
           delay: 3200,
           disableOnInteraction: false,
@@ -600,6 +613,16 @@ var wySw3 = new Swiper("#wySw3", {
             scale: 1.2,
             opacity: 0.9,
           },
+        };
+      }
+      // 任务三②超纲能力：mousewheel 滚轮切换
+      // 参考官方示例 211-slides-per-group-skip.html，启用鼠标滚轮控制
+      // sensitivity: 1 表示每滚动一格切换一张；releaseOnEdges 配合 loop 使用
+      if (isMousewheel) {
+        wySw4Cfg.mousewheel = {
+          enabled: true,
+          sensitivity: 1,
+          releaseOnEdges: false,
         };
       }
       wySw4 = new Swiper("#wySw4", wySw4Cfg);
