@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>移动常用事件 · 手势 / 缩放 / 传感器</title>
+<!--
+  文件：mobile-events.html
+  姓名：葛佳磊        学号：24001010612
+  日期：2026-11-16
+  功能：把三个移动端练习合并到一页
+    区块一：触摸手势轮播（touchstart / touchend，横向位移阈值 40px）
+    区块二：双指缩放图片查看器（deviceorientation? 不，是 touch 捏合 + deviceorientation 不在这里）
+    区块三：传感器（devicemotion 摇一摇抽菜 + deviceorientation 倾斜视差）
+  所有变量、类名、id 一律以 gjl_ 开头；各区块内部变量再加区块前缀避免冲突。
+-->
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:#0f172a;color:#e2e8f0;
+    font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;scroll-behavior:smooth}
+  body{padding-bottom:60px}
+
+  /* ===== 顶部导航 ===== */
+  .gjl_nav{
+    position:sticky;top:0;z-index:99;
+    display:flex;justify-content:center;gap:8px;
+    padding:12px;background:rgba(15,23,42,.92);
+    backdrop-filter:blur(10px);border-bottom:1px solid #1e293b;
+  }
+  .gjl_nav a{
+    padding:8px 16px;border-radius:999px;font-size:13px;
+    color:#94a3b8;text-decoration:none;letter-spacing:.5px;
+    border:1px solid transparent;transition:all .2s;
+  }
+  .gjl_nav a:hover{color:#f8fafc;border-color:#334155}
+
+  .gjl_header{text-align:center;padding:36px 16px 8px}
+  .gjl_header h1{font-size:22px;font-weight:800;color:#f8fafc;letter-spacing:2px}
+  .gjl_header p{margin-top:8px;font-size:12px;color:#64748b;letter-spacing:1px}
+
+  .gjl_section{
+    max-width:420px;margin:28px auto 0;padding:0 16px;
+  }
+  .gjl_section h2{
+    font-size:17px;font-weight:700;color:#f8fafc;
+    padding-left:12px;border-left:4px solid #3b82f6;margin-bottom:14px;letter-spacing:1px;
+  }
+  .gjl_section .gjl_sub{font-size:12px;color:#64748b;margin:-8px 0 16px 16px;line-height:1.7}
+
+  /* ===== 任务一：理论问答 ===== */
+  .gjl_qa_list{display:flex;flex-direction:column;gap:14px}
+  .gjl_qa_item{
+    background:linear-gradient(135deg,rgba(30,41,59,.9),rgba(15,23,42,.9));
+    border:1px solid #334155;border-radius:16px;padding:18px 18px 16px;
+    box-shadow:0 12px 30px rgba(0,0,0,.3);
+  }
+  .gjl_qa_q{
+    display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;
+    font-size:14px;font-weight:700;color:#f8fafc;line-height:1.6;
+  }
+  .gjl_qa_q .gjl_qa_tag{
+    flex-shrink:0;width:28px;height:28px;border-radius:50%;
+    background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:800;color:#fff;
+  }
+  .gjl_qa_a{
+    font-size:13px;color:#cbd5e1;line-height:1.9;
+    padding-left:38px;
+  }
+  .gjl_qa_a code{
+    background:rgba(59,130,246,.18);color:#93c5fd;
+    padding:1px 6px;border-radius:4px;font-size:12px;
+    font-family:Consolas,monospace;
+  }
+  .gjl_qa_a b{color:#fbbf24;font-weight:700}
+
+  /* ===== 区块一：手势轮播 ===== */
+  .gjl_ges_page{
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px 16px;
+    background-image:radial-gradient(circle at 20% 0%,#1e3a8a 0%,transparent 45%),
+                     radial-gradient(circle at 80% 100%,#7c2d12 0%,transparent 45%);
+    border-radius:20px;
+  }
+  .gjl_ges_title{font-size:18px;font-weight:700;color:#f8fafc;letter-spacing:2px;margin-bottom:6px}
+  .gjl_ges_tip{font-size:12px;color:#94a3b8;margin-bottom:20px}
+  .gjl_ges_area{
+    position:relative;width:100%;max-width:340px;height:420px;
+    border-radius:22px;overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.5);
+    touch-action:pan-y;
+  }
+  .gjl_ges_track{
+    display:flex;width:400%;height:100%;
+    transition:transform .3s ease;
+  }
+  .gjl_ges_card{
+    flex:0 0 25%;height:100%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:28px;text-align:center;color:#fff;
+  }
+  .gjl_ges_card--1{background:linear-gradient(135deg,#dc2626,#f97316)}
+  .gjl_ges_card--2{background:linear-gradient(135deg,#0ea5e9,#6366f1)}
+  .gjl_ges_card--3{background:linear-gradient(135deg,#10b981,#84cc16)}
+  .gjl_ges_card--4{background:linear-gradient(135deg,#a855f7,#ec4899)}
+  .gjl_ges_no{font-size:64px;font-weight:800;opacity:.35;line-height:1}
+  .gjl_ges_name{font-size:24px;font-weight:800;margin:12px 0 8px;letter-spacing:1px}
+  .gjl_ges_desc{font-size:13px;line-height:1.8;opacity:.92}
+  .gjl_ges_counter{
+    margin-top:18px;font-size:13px;color:#fbbf24;font-weight:700;letter-spacing:1px;
+  }
+  .gjl_ges_hint{margin-top:10px;font-size:12px;color:#64748b}
+
+  /* ===== 区块二：双指缩放 ===== */
+  .gjl_zoom_page{padding:24px 16px;text-align:center;
+    background:linear-gradient(180deg,#0f172a,#1e293b);border-radius:20px}
+  .gjl_zoom_title{font-size:18px;font-weight:700;color:#f8fafc;letter-spacing:2px;margin-bottom:6px}
+  .gjl_zoom_sub{font-size:12px;color:#94a3b8;margin-bottom:20px}
+  .gjl_zoom_viewer{
+    position:relative;width:100%;height:300px;border-radius:16px;overflow:hidden;
+    background:#111;display:flex;align-items:center;justify-content:center;
+    touch-action:none;-webkit-user-select:none;user-select:none;
+    -webkit-touch-callout:none;
+  }
+  .gjl_zoom_img{max-width:100%;max-height:100%;transform-origin:center center;
+    will-change:transform;pointer-events:none}
+
+  /* ===== 区块三：传感器 ===== */
+  .gjl_sen_page{padding:24px 16px;text-align:center;
+    background:linear-gradient(180deg,#1e293b,#0f172a);border-radius:20px}
+  .gjl_sen_title{font-size:18px;font-weight:700;color:#f8fafc;letter-spacing:2px;margin-bottom:6px}
+  .gjl_sen_sub{font-size:12px;color:#94a3b8;margin-bottom:20px}
+  .gjl_sen_phone{
+    width:140px;height:250px;border-radius:28px;margin:0 auto 18px;
+    background:linear-gradient(145deg,#1e293b,#0f172a);border:3px solid #334155;
+    display:flex;align-items:center;justify-content:center;position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.5);
+  }
+  .gjl_sen_phone::before{content:"";position:absolute;top:10px;left:50%;
+    transform:translateX(-50%);width:44px;height:5px;border-radius:3px;background:#334155}
+  .gjl_sen_phone-icon{font-size:52px}
+  .gjl_sen_phone.shake{animation:gjl_shake .5s ease}
+  @keyframes gjl_shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-12deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(6deg)}}
+  .gjl_sen_hint{font-size:14px;color:#fbbf24;margin-bottom:16px;animation:gjl_pulse 1.6s infinite}
+  @keyframes gjl_pulse{0%,100%{opacity:.6}50%{opacity:1}}
+  .gjl_sen_result{
+    margin:0 auto;max-width:320px;min-height:110px;
+    background:linear-gradient(135deg,#f59e0b,#ef4444);
+    border-radius:16px;padding:18px 14px;text-align:center;
+    box-shadow:0 14px 36px rgba(239,68,68,.35);
+    transform:scale(0);opacity:0;transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .4s;
+  }
+  .gjl_sen_result.show{transform:scale(1);opacity:1}
+  .gjl_sen_dishname{font-size:22px;font-weight:800;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.3)}
+  .gjl_sen_dishdesc{margin-top:8px;font-size:12px;line-height:1.7;color:rgba(255,255,255,.92)}
+  .gjl_sen_fallback{margin-top:14px}
+  .gjl_btn{
+    padding:10px 24px;border:none;border-radius:999px;cursor:pointer;
+    background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;
+    font-size:14px;font-weight:700;letter-spacing:1px;
+    box-shadow:0 8px 20px rgba(59,130,246,.4);
+  }
+  .gjl_btn:active{transform:scale(.95)}
+  .gjl_note{margin-top:10px;font-size:11px;color:#64748b}
+  .gjl_sen_iosperm{margin-top:14px}
+  .gjl_sen_debug{margin-top:12px;font-size:11px;color:#475569;font-family:Consolas,monospace;line-height:1.8}
+
+  /* 视差 */
+  .gjl_parallax-title{font-size:15px;font-weight:700;color:#f8fafc;margin:28px 0 6px;letter-spacing:1px}
+  .gjl_parallax-sub{font-size:11px;color:#94a3b8;margin-bottom:14px}
+  .gjl_parallax{
+    position:relative;width:100%;height:200px;border-radius:16px;overflow:hidden;
+    background:linear-gradient(180deg,#1e3a8a,#312e81 50%,#7c2d12);
+    box-shadow:0 16px 40px rgba(0,0,0,.4);
+  }
+  .gjl_layer{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    transition:transform .08s linear;will-change:transform;pointer-events:none}
+  .gjl_layer--sun{font-size:48px;opacity:.9}
+  .gjl_layer--cloud{font-size:28px;opacity:.7}
+  .gjl_layer--mountain{font-size:64px;opacity:.85}
+  .gjl_layer--tree{font-size:32px;opacity:.9}
+  .gjl_layer--ground{font-size:48px;opacity:.95}
+  .gjl_gamma-val{margin-top:10px;font-size:11px;color:#64748b;font-family:Consolas,monospace}
+
+  /* 首页链接 */
+  .gjl_home_link{
+    display:inline-block;margin:40px auto 0;padding:10px 24px;border-radius:999px;
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
+    color:#93c5fd;text-decoration:none;font-size:13px;letter-spacing:1px;
+  }
+</style>
+</head>
+<body>
+
+<nav class="gjl_nav">
+  <a href="#qa">理论问答</a>
+  <a href="#ges">手势轮播</a>
+  <a href="#zoom">双指缩放</a>
+  <a href="#sen">摇一摇</a>
+  <a href="#sen">倾斜视差</a>
+</nav>
+
+<header class="gjl_header">
+  <h1>移动常用事件</h1>
+  <p>葛佳磊 · 24001010612 · 触摸 / 手势 / 传感器</p>
+</header>
+
+<!-- ============ 任务一：触摸事件理论问答 ============ -->
+<section class="gjl_section" id="qa">
+  <h2>任务一 · 触摸事件理论问答</h2>
+  <p class="gjl_sub">围绕 touchstart / touchmove / touchend / touchcancel 与 click 的关系回答三个问题。</p>
+
+  <div class="gjl_qa_list">
+    <div class="gjl_qa_item">
+      <div class="gjl_qa_q"><span class="gjl_qa_tag">1</span><span>一次拖动里 <code>touchmove</code> 大约触发多少次？和距离有什么关系？</span></div>
+      <div class="gjl_qa_a">
+        <code>touchmove</code> 不是"每移动多少像素就触发一次"，而是跟<b>拖动时间、屏幕刷新/采样率和手指速度</b>有关，浏览器还可能合并事件。<br>
+        同样距离下，<b>慢拖会触发很多次</b>，<b>快甩可能只触发几次</b>。<br>
+        所以算滑动距离要<b>记录起点和终点坐标</b>（或累加坐标），<b>不能数 <code>touchmove</code> 的次数</b>。
+      </div>
+    </div>
+
+    <div class="gjl_qa_item">
+      <div class="gjl_qa_q"><span class="gjl_qa_tag">2</span><span><code>click</code> 出现在 <code>touchend</code> 之前还是之后？</span></div>
+      <div class="gjl_qa_a">
+        <code>click</code> 在 <code>touchend</code> <b>之后</b>，完整顺序大致是：<br>
+        <code>touchstart → touchmove* → touchend → 鼠标事件 → click</code><br>
+        不过一旦被判定为<b>滑动/滚动</b>、调用了 <code>preventDefault()</code>、或<b>移动超过点击阈值</b>，<code>click</code> 就可能不出现。
+      </div>
+    </div>
+
+    <div class="gjl_qa_item">
+      <div class="gjl_qa_q"><span class="gjl_qa_tag">3</span><span>如果把 <code>touchend</code> 换成 <code>touchcancel</code>，会发生什么？</span></div>
+      <div class="gjl_qa_a">
+        换成 <code>touchcancel</code> 后，<b>正常松手不会触发它</b>。<br>
+        <code>touchcancel</code> 只表示触摸被<b>系统或浏览器打断</b>，比如来电、系统手势、弹窗等。<br>
+        这时<b>不该当成正常滑动完成来处理</b>，一般只做<b>清理状态</b>（如复位、解锁），而且之后通常<b>不会再有 <code>touchend</code> 或 <code>click</code></b>。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 区块一：手势轮播 ============ -->
+<section class="gjl_section" id="ges">
+  <h2>一、触摸手势轮播</h2>
+  <p class="gjl_sub">touchstart / touchend 监听横向位移，阈值 40px，左滑下一张、右滑上一张，边界提示，0.3s 过渡 + 300ms 冷却。</p>
+
+  <div class="gjl_ges_page">
+    <div class="gjl_ges_title">今日推荐</div>
+    <div class="gjl_ges_tip">← 左右滑动卡片 →</div>
+    <div class="gjl_ges_area" id="gjl_ges_area">
+      <div class="gjl_ges_track" id="gjl_ges_track">
+        <div class="gjl_ges_card gjl_ges_card--1">
+          <div class="gjl_ges_no">01</div>
+          <div class="gjl_ges_name">麻辣小龙虾</div>
+          <p class="gjl_ges_desc">红油翻滚，蒜香与花椒在舌尖炸开，夏夜标配。</p>
+        </div>
+        <div class="gjl_ges_card gjl_ges_card--2">
+          <div class="gjl_ges_no">02</div>
+          <div class="gjl_ges_name">蟹粉小笼</div>
+          <p class="gjl_ges_desc">皮薄汁多，一口咬开满嘴蟹粉鲜。</p>
+        </div>
+        <div class="gjl_ges_card gjl_ges_card--3">
+          <div class="gjl_ges_no">03</div>
+          <div class="gjl_ges_name">抹茶千层</div>
+          <p class="gjl_ges_desc">层层奶油，微苦回甘，甜品柜里最安静的一块。</p>
+        </div>
+        <div class="gjl_ges_card gjl_ges_card--4">
+          <div class="gjl_ges_no">04</div>
+          <div class="gjl_ges_name">芝士焗蟹</div>
+          <p class="gjl_ges_desc">拉丝芝士裹住鲜甜蟹肉，奶香暴击。</p>
+        </div>
+      </div>
+    </div>
+    <div class="gjl_ges_counter" id="gjl_ges_counter">第 1 / 4 张</div>
+    <div class="gjl_ges_hint" id="gjl_ges_hint">touch-action: pan-y，纵向仍可滚动页面</div>
+  </div>
+</section>
+
+<!-- ============ 区块二：双指缩放 ============ -->
+<section class="gjl_section" id="zoom">
+  <h2>二、双指缩放图片查看器</h2>
+  <p class="gjl_sub">touchstart 区分单/双指，双指捏合按距离比例缩放（1~4 倍）以两指中点为基准；单指 scale>1 时拖动，松手回边界；双击 1x/2x 切换。</p>
+
+  <div class="gjl_zoom_page">
+    <div class="gjl_zoom_title">图片查看器</div>
+    <div class="gjl_zoom_sub">双指捏合缩放 · 单指拖动 · 双击放大</div>
+    <div class="gjl_zoom_viewer" id="gjl_zoom_viewer">
+      <img class="gjl_zoom_img" id="gjl_zoom_img" src="swiper-imgs/moduhao_1.jpg" alt="魔都号" draggable="false">
+    </div>
+  </div>
+</section>
+
+<!-- ============ 区块三：传感器 ============ -->
+<section class="gjl_section" id="sen">
+  <h2>三、传感器（摇一摇 + 倾斜视差）</h2>
+  <p class="gjl_sub">devicemotion 合成加速度超阈值抽菜，deviceorientation 取 gamma 驱动多层视差，iOS 按钮授权与降级方案。</p>
+
+  <div class="gjl_sen_page">
+    <div class="gjl_sen_title">摇一摇彩蛋</div>
+    <div class="gjl_sen_phone" id="gjl_sen_phone"><span class="gjl_sen_phone-icon">📱</span></div>
+    <p class="gjl_sen_hint" id="gjl_sen_hint">摇一摇手机，抽今日菜谱</p>
+    <div class="gjl_sen_result" id="gjl_sen_result">
+      <div class="gjl_sen_dishname" id="gjl_sen_dishname">—</div>
+      <p class="gjl_sen_dishdesc" id="gjl_sen_dishdesc">—</p>
+    </div>
+    <div class="gjl_sen_fallback" id="gjl_sen_fallback" style="display:none">
+      <button class="gjl_btn" id="gjl_sen_btn">点我抽一次</button>
+      <p class="gjl_note">当前设备不支持，请用手机打开</p>
+    </div>
+    <div class="gjl_sen_iosperm" id="gjl_sen_iosperm" style="display:none">
+      <button class="gjl_btn" id="gjl_sen_permbtn">请求传感器权限</button>
+      <p class="gjl_note">iOS 需手动授权摇一摇与倾斜</p>
+    </div>
+    <div class="gjl_sen_debug" id="gjl_sen_debug"></div>
+
+    <div class="gjl_parallax-title">倾斜视差</div>
+    <p class="gjl_parallax-sub">左右倾斜手机，山、云、树产生不同速度的位移</p>
+    <div class="gjl_parallax" id="gjl_parallax">
+      <span class="gjl_layer gjl_layer--sun"      data-depth="0.6" style="top:28%">☀️</span>
+      <span class="gjl_layer gjl_layer--cloud"    data-depth="1.2" style="top:35%">☁️</span>
+      <span class="gjl_layer gjl_layer--mountain" data-depth="2.0" style="top:58%">⛰️</span>
+      <span class="gjl_layer gjl_layer--tree"     data-depth="3.0" style="top:72%">🌲</span>
+      <span class="gjl_layer gjl_layer--ground"   data-depth="3.5" style="top:88%">🌾</span>
+    </div>
+    <div class="gjl_gamma-val" id="gjl_gamma_val">倾斜角 gamma：—</div>
+  </div>
+</section>
+
+<div style="text-align:center">
+  <a class="gjl_home_link" href="index.html">← 返回课堂实践中心</a>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     区块一：手势轮播
+     ============================================================ */
+  var gjl_ges_area   = document.getElementById('gjl_ges_area');
+  var gjl_ges_track  = document.getElementById('gjl_ges_track');
+  var gjl_ges_counter= document.getElementById('gjl_ges_counter');
+  var gjl_ges_hint   = document.getElementById('gjl_ges_hint');
+  var gjl_ges_total  = 4;
+  var gjl_ges_index  = 0;
+  var gjl_ges_startX = 0, gjl_ges_startY = 0;
+  var gjl_ges_locked = false;
+
+  function gjl_ges_render() {
+    gjl_ges_track.style.transform = 'translateX(' + (-gjl_ges_index * 25) + '%)';
+    gjl_ges_counter.textContent = '第 ' + (gjl_ges_index + 1) + ' / ' + gjl_ges_total + ' 张';
+  }
+
+  function gjl_ges_go(step) {
+    var gjl_target = gjl_ges_index + step;
+    if (gjl_target < 0) { gjl_ges_hint.textContent = '已经是第一张'; gjl_ges_hint.style.color = '#f87171'; return; }
+    if (gjl_target >= gjl_ges_total) { gjl_ges_hint.textContent = '已经是最后一张'; gjl_ges_hint.style.color = '#f87171'; return; }
+    gjl_ges_index = gjl_target;
+    gjl_ges_hint.textContent = 'touch-action: pan-y，纵向仍可滚动页面';
+    gjl_ges_hint.style.color = '#64748b';
+    gjl_ges_render();
+  }
+
+  gjl_ges_area.addEventListener('touchstart', function (e) {
+    if (gjl_ges_locked) return;
+    var gjl_t = e.touches[0];
+    gjl_ges_startX = gjl_t.clientX;
+    gjl_ges_startY = gjl_t.clientY;
+  }, { passive: true });
+
+  gjl_ges_area.addEventListener('touchend', function (e) {
+    if (gjl_ges_locked) return;
+    var gjl_t = e.changedTouches[0];
+    var gjl_dx = gjl_t.clientX - gjl_ges_startX;
+    var gjl_dy = gjl_t.clientY - gjl_ges_startY;
+    if (Math.abs(gjl_dx) < 40 || Math.abs(gjl_dy) > Math.abs(gjl_dx)) return; // 阈值 40px 且横向为主
+    gjl_ges_locked = true;
+    gjl_ges_go(gjl_dx < 0 ? 1 : -1);
+    setTimeout(function () { gjl_ges_locked = false; }, 300); // 300ms 冷却
+  }, { passive: true });
+
+  gjl_ges_render();
+
+  /* ============================================================
+     区块二：双指缩放
+     ============================================================ */
+  var gjl_zoom_viewer = document.getElementById('gjl_zoom_viewer');
+  var gjl_zoom_img    = document.getElementById('gjl_zoom_img');
+  var gjl_zoom_scale  = 1;
+  var gjl_zoom_panX   = 0, gjl_zoom_panY = 0;
+  var gjl_zoom_mode   = '';
+  var gjl_zoom_startDist = 0, gjl_zoom_startScale = 1;
+  var gjl_zoom_anchorX = 0, gjl_zoom_anchorY = 0;
+  var gjl_zoom_panStartX = 0, gjl_zoom_panStartY = 0, gjl_zoom_panBaseX = 0, gjl_zoom_panBaseY = 0;
+  var gjl_zoom_lastTap = 0, gjl_zoom_lastTapX = 0, gjl_zoom_lastTapY = 0;
+
+  function gjl_zoom_dist(a, b) { var dx=a.clientX-b.clientX, dy=a.clientY-b.clientY; return Math.sqrt(dx*dx+dy*dy); }
+  function gjl_zoom_clamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
+  function gjl_zoom_baseSize() {
+    var iw = gjl_zoom_img.naturalWidth, ih = gjl_zoom_img.naturalHeight;
+    var vw = gjl_zoom_viewer.clientWidth, vh = gjl_zoom_viewer.clientHeight;
+    var fit = Math.min(vw/iw, vh/ih);
+    return { w: iw*fit, h: ih*fit };
+  }
+  function gjl_zoom_clampPan() {
+    var base = gjl_zoom_baseSize();
+    var vw = gjl_zoom_viewer.clientWidth, vh = gjl_zoom_viewer.clientHeight;
+    var maxX = Math.max(0, (base.w*gjl_zoom_scale - vw)/2);
+    var maxY = Math.max(0, (base.h*gjl_zoom_scale - vh)/2);
+    gjl_zoom_panX = gjl_zoom_clamp(gjl_zoom_panX, -maxX, maxX);
+    gjl_zoom_panY = gjl_zoom_clamp(gjl_zoom_panY, -maxY, maxY);
+  }
+  function gjl_zoom_render() {
+    gjl_zoom_img.style.transform =
+      'translate(' + gjl_zoom_panX + 'px,' + gjl_zoom_panY + 'px) scale(' + gjl_zoom_scale + ')';
+  }
+  function gjl_zoom_trans(on) { gjl_zoom_img.style.transition = on ? 'transform .25s ease' : 'none'; }
+
+  gjl_zoom_viewer.addEventListener('touchstart', function (e) {
+    gjl_zoom_trans(false);
+    if (e.touches.length >= 2) {
+      gjl_zoom_mode = 'pinch';
+      var t1 = e.touches[0], t2 = e.touches[1];
+      gjl_zoom_startDist = gjl_zoom_dist(t1, t2);
+      gjl_zoom_startScale = gjl_zoom_scale;
+      var mx = (t1.clientX+t2.clientX)/2, my = (t1.clientY+t2.clientY)/2;
+      var cx = gjl_zoom_viewer.clientWidth/2, cy = gjl_zoom_viewer.clientHeight/2;
+      gjl_zoom_anchorX = (mx - cx - gjl_zoom_panX) / gjl_zoom_scale;
+      gjl_zoom_anchorY = (my - cy - gjl_zoom_panY) / gjl_zoom_scale;
+    } else if (e.touches.length === 1 && gjl_zoom_scale > 1) {
+      gjl_zoom_mode = 'pan';
+      var t = e.touches[0];
+      gjl_zoom_panStartX = t.clientX; gjl_zoom_panStartY = t.clientY;
+      gjl_zoom_panBaseX = gjl_zoom_panX; gjl_zoom_panBaseY = gjl_zoom_panY;
+    } else { gjl_zoom_mode = ''; }
+  }, { passive: false });
+
+  gjl_zoom_viewer.addEventListener('touchmove', function (e) {
+    e.preventDefault();
+    if (gjl_zoom_mode === 'pinch' && e.touches.length >= 2) {
+      var t1 = e.touches[0], t2 = e.touches[1];
+      var cur = gjl_zoom_dist(t1, t2);
+      var ns = gjl_zoom_clamp(gjl_zoom_startScale * (cur / gjl_zoom_startDist), 1, 4);
+      var mx = (t1.clientX+t2.clientX)/2, my = (t1.clientY+t2.clientY)/2;
+      var cx = gjl_zoom_viewer.clientWidth/2, cy = gjl_zoom_viewer.clientHeight/2;
+      gjl_zoom_panX = mx - cx - ns * gjl_zoom_anchorX;
+      gjl_zoom_panY = my - cy - ns * gjl_zoom_anchorY;
+      gjl_zoom_scale = ns;
+      if (gjl_zoom_scale <= 1) { gjl_zoom_panX = 0; gjl_zoom_panY = 0; }
+      gjl_zoom_render();
+    } else if (gjl_zoom_mode === 'pan' && e.touches.length === 1) {
+      var t = e.touches[0];
+      gjl_zoom_panX = gjl_zoom_panBaseX + (t.clientX - gjl_zoom_panStartX);
+      gjl_zoom_panY = gjl_zoom_panBaseY + (t.clientY - gjl_zoom_panStartY);
+      gjl_zoom_render();
+    }
+  }, { passive: false });
+
+  gjl_zoom_viewer.addEventListener('touchend', function (e) {
+    gjl_zoom_mode = '';
+    if (e.touches.length > 0) return;
+    gjl_zoom_trans(true);
+    gjl_zoom_clampPan();
+    gjl_zoom_render();
+    if (e.changedTouches.length === 1) {
+      var t = e.changedTouches[0];
+      var now = Date.now(), dt = now - gjl_zoom_lastTap;
+      var dx = t.clientX - gjl_zoom_lastTapX, dy = t.clientY - gjl_zoom_lastTapY;
+      if (dt < 300 && dt > 0 && Math.abs(dx) < 30 && Math.abs(dy) < 30) {
+        gjl_zoom_doubleTap(t.clientX, t.clientY);
+        gjl_zoom_lastTap = 0;
+      } else {
+        gjl_zoom_lastTap = now; gjl_zoom_lastTapX = t.clientX; gjl_zoom_lastTapY = t.clientY;
+      }
+    }
+  });
+
+  function gjl_zoom_doubleTap(x, y) {
+    gjl_zoom_trans(true);
+    var cx = gjl_zoom_viewer.clientWidth/2, cy = gjl_zoom_viewer.clientHeight/2;
+    if (gjl_zoom_scale > 1) {
+      gjl_zoom_scale = 1; gjl_zoom_panX = 0; gjl_zoom_panY = 0;
+    } else {
+      gjl_zoom_scale = 2;
+      gjl_zoom_panX = cx - x;
+      gjl_zoom_panY = cy - y;
+      gjl_zoom_clampPan();
+    }
+    gjl_zoom_render();
+  }
+
+  gjl_zoom_render();
+
+  /* ============================================================
+     区块三：传感器（摇一摇 + 倾斜视差）
+     ============================================================ */
+  var gjl_sen_phone    = document.getElementById('gjl_sen_phone');
+  var gjl_sen_hint     = document.getElementById('gjl_sen_hint');
+  var gjl_sen_result   = document.getElementById('gjl_sen_result');
+  var gjl_sen_name     = document.getElementById('gjl_sen_dishname');
+  var gjl_sen_desc     = document.getElementById('gjl_sen_dishdesc');
+  var gjl_sen_fallback = document.getElementById('gjl_sen_fallback');
+  var gjl_sen_btn      = document.getElementById('gjl_sen_btn');
+  var gjl_sen_debug    = document.getElementById('gjl_sen_debug');
+  var gjl_sen_iosperm  = document.getElementById('gjl_sen_iosperm');
+  var gjl_sen_permbtn  = document.getElementById('gjl_sen_permbtn');
+  var gjl_parallax     = document.getElementById('gjl_parallax');
+  var gjl_layers       = gjl_parallax.querySelectorAll('.gjl_layer');
+  var gjl_gamma_val    = document.getElementById('gjl_gamma_val');
+
+  var gjl_sen_menu = [
+    { name: '麻辣小龙虾', desc: '红油翻滚，蒜香与花椒在舌尖炸开，夏夜标配。' },
+    { name: '蟹粉小笼',   desc: '皮薄汁多，一口咬开满嘴蟹粉鲜。' },
+    { name: '抹茶千层',   desc: '层层奶油，微苦回甘，甜品柜里最安静的一块。' },
+    { name: '芝士焗蟹',   desc: '拉丝芝士裹住鲜甜蟹肉，奶香暴击。' },
+    { name: '糖醋里脊',   desc: '外酥里嫩，酸甜开胃，老少通吃。' },
+    { name: '冬阴功汤',   desc: '酸辣鲜香，大虾与香茅的热带风情。' },
+    { name: '黑松露意面', desc: '菌香浓郁，奶油裹住每一根面条。' },
+    { name: '佛跳墙',     desc: '山珍海味同炖一坛，鲜到掉眉毛。' },
+  ];
+
+  var gjl_sen_threshold = 18;
+  var gjl_sen_cooldown  = 1500;
+  var gjl_sen_locked    = false;
+
+  function gjl_sen_pick() {
+    var i = Math.floor(Math.random() * gjl_sen_menu.length);
+    gjl_sen_name.textContent = gjl_sen_menu[i].name;
+    gjl_sen_desc.textContent = gjl_sen_menu[i].desc;
+    gjl_sen_result.classList.remove('show'); void gjl_sen_result.offsetWidth;
+    gjl_sen_result.classList.add('show');
+    gjl_sen_phone.classList.remove('shake'); void gjl_sen_phone.offsetWidth;
+    gjl_sen_phone.classList.add('shake');
+  }
+
+  function gjl_sen_onMotion(e) {
+    var acc = e.accelerationIncludingGravity;
+    if (!acc || (acc.x === 0 && acc.y === 0 && acc.z === 0)) { gjl_sen_showFallback(); return; }
+    var total = Math.sqrt(acc.x*acc.x + acc.y*acc.y + acc.z*acc.z);
+    gjl_sen_debug.textContent = '合成加速度：' + total.toFixed(2) + ' m/s²';
+    if (total > gjl_sen_threshold && !gjl_sen_locked) {
+      gjl_sen_locked = true; gjl_sen_pick();
+      setTimeout(function () { gjl_sen_locked = false; }, gjl_sen_cooldown);
+    }
+  }
+
+  function gjl_sen_showFallback() {
+    if (gjl_sen_fallback.style.display === 'block') return;
+    gjl_sen_fallback.style.display = 'block';
+    gjl_sen_hint.textContent = '当前设备不支持摇一摇';
+    gjl_sen_hint.style.color = '#94a3b8'; gjl_sen_hint.style.animation = 'none';
+  }
+
+  function gjl_sen_onOrientation(e) {
+    var gamma = e.gamma;
+    if (gamma === null || isNaN(gamma)) return;
+    gamma = Math.max(-45, Math.min(45, gamma));
+    gjl_gamma_val.textContent = '倾斜角 gamma：' + gamma.toFixed(1) + '°';
+    gjl_layers.forEach(function (layer) {
+      var depth = parseFloat(layer.dataset.depth) || 1;
+      var offset = gamma * depth;
+      layer.style.transform = 'translate(calc(-50% + ' + offset + 'px), -50%)';
+    });
+  }
+
+  // iOS 权限
+  function gjl_sen_requestPermission() {
+    var hasMotion = (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function');
+    var hasOrient = (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function');
+    if (!hasMotion && !hasOrient) return false;
+    var reqs = [];
+    if (hasMotion) reqs.push(DeviceMotionEvent.requestPermission());
+    if (hasOrient) reqs.push(DeviceOrientationEvent.requestPermission());
+    Promise.all(reqs).then(function (states) {
+      var motionOk = hasMotion ? states[0] === 'granted' : true;
+      var oIdx = hasMotion ? 1 : 0;
+      var orientOk = hasOrient ? states[oIdx] === 'granted' : true;
+      if (motionOk) window.addEventListener('devicemotion', gjl_sen_onMotion); else gjl_sen_showFallback();
+      if (orientOk) window.addEventListener('deviceorientation', gjl_sen_onOrientation);
+    }).catch(gjl_sen_showFallback);
+    return true;
+  }
+
+  function gjl_sen_init() {
+    if (typeof window.DeviceMotionEvent === 'undefined') gjl_sen_showFallback();
+    var isIOS13 = (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') ||
+                  (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function');
+    if (isIOS13) {
+      gjl_sen_iosperm.style.display = 'block';
+      gjl_sen_permbtn.addEventListener('click', function () {
+        gjl_sen_requestPermission();
+        gjl_sen_iosperm.style.display = 'none';
+      });
+    } else {
+      if (typeof window.DeviceMotionEvent !== 'undefined') window.addEventListener('devicemotion', gjl_sen_onMotion);
+      if (typeof window.DeviceOrientationEvent !== 'undefined') window.addEventListener('deviceorientation', gjl_sen_onOrientation);
+      setTimeout(function () { if (gjl_sen_debug.textContent === '') gjl_sen_showFallback(); }, 1500);
+    }
+    gjl_sen_btn.addEventListener('click', function () {
+      if (!gjl_sen_locked) { gjl_sen_locked = true; gjl_sen_pick(); setTimeout(function () { gjl_sen_locked = false; }, gjl_sen_cooldown); }
+    });
+  }
+
+  gjl_sen_init();
+})();
+</script>
+
+</body>
+</html>
