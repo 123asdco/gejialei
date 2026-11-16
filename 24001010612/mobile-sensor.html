@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>摇一摇彩蛋 + 倾斜视差 · 今日菜谱</title>
+<!--
+  文件：mobile-sensor.html
+  姓名：葛佳磊        学号：24001010612
+  日期：2026-11-16
+  功能 A 摇一摇：监听 devicemotion，用 accelerationIncludingGravity 计算合成加速度，
+        超过阈值（约 18）判定为摇动，随机抽取一道菜，触发后 1.5s 冷却。
+  功能 B 倾斜视差：监听 deviceorientation，取 gamma（左右倾斜角），
+        多层元素按不同系数平移，产生视差位移。
+        不支持传感器时显示降级按钮。变量一律以 gjl_ 开头。
+-->
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    min-height:100vh;
+    font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    background:#0f172a;
+    background-image:radial-gradient(circle at 30% 0%,#1e3a8a 0%,transparent 50%),
+                     radial-gradient(circle at 80% 100%,#7c2d12 0%,transparent 50%);
+    color:#e2e8f0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px 16px;
+    overflow-x:hidden;
+  }
+
+  .gjl_head{text-align:center;margin-bottom:28px}
+  .gjl_head h1{font-size:22px;font-weight:800;letter-spacing:2px;color:#f8fafc}
+  .gjl_head p{margin-top:8px;font-size:13px;color:#94a3b8;letter-spacing:1px}
+
+  /* 手机外框（装饰） */
+  .gjl_phone{
+    width:200px;height:360px;border-radius:36px;
+    background:linear-gradient(145deg,#1e293b,#0f172a);
+    border:3px solid #334155;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 20px 50px rgba(0,0,0,.5),inset 0 0 0 2px #1e293b;
+    position:relative;margin-bottom:32px;
+    transition:transform .1s ease;
+  }
+  .gjl_phone::before{
+    content:"";position:absolute;top:14px;left:50%;transform:translateX(-50%);
+    width:60px;height:6px;border-radius:3px;background:#334155;
+  }
+  .gjl_phone-icon{font-size:80px;line-height:1;filter:drop-shadow(0 4px 12px rgba(251,191,36,.4))}
+  .gjl_phone.shake{animation:gjl_shake .5s ease}
+  @keyframes gjl_shake{
+    0%,100%{transform:rotate(0)}
+    20%{transform:rotate(-12deg)}
+    40%{transform:rotate(10deg)}
+    60%{transform:rotate(-8deg)}
+    80%{transform:rotate(6deg)}
+  }
+
+  .gjl_hint{
+    text-align:center;font-size:15px;color:#fbbf24;letter-spacing:1px;
+    margin-bottom:20px;animation:gjl_pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes gjl_pulse{
+    0%,100%{opacity:.6}
+    50%{opacity:1}
+  }
+
+  /* 结果卡片 */
+  .gjl_result{
+    width:100%;max-width:360px;min-height:140px;
+    background:linear-gradient(135deg,#f59e0b,#ef4444);
+    border-radius:20px;padding:24px 20px;text-align:center;
+    box-shadow:0 16px 40px rgba(239,68,68,.35);
+    transform:scale(0);opacity:0;
+    transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .4s ease;
+  }
+  .gjl_result.show{transform:scale(1);opacity:1}
+  .gjl_dish-name{font-size:26px;font-weight:800;color:#fff;letter-spacing:2px;
+    text-shadow:0 2px 6px rgba(0,0,0,.3)}
+  .gjl_dish-desc{margin-top:10px;font-size:13px;line-height:1.8;color:rgba(255,255,255,.92)}
+
+  /* 降级按钮 */
+  .gjl_fallback{margin-top:18px;text-align:center}
+  .gjl_btn{
+    padding:12px 28px;border:none;border-radius:999px;
+    background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+    color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;
+    cursor:pointer;box-shadow:0 8px 20px rgba(59,130,246,.4);
+    transition:transform .15s ease;
+  }
+  .gjl_btn:active{transform:scale(.95)}
+  .gjl_note{margin-top:14px;font-size:12px;color:#64748b;letter-spacing:.5px}
+
+  /* 调试信息 */
+  .gjl_debug{
+    margin-top:20px;font-size:11px;color:#475569;font-family:Consolas,monospace;
+    text-align:center;line-height:1.8;
+  }
+
+  /* ===== 任务四-B：倾斜视差 ===== */
+  .gjl_divider{
+    width:100%;max-width:360px;height:1px;
+    background:linear-gradient(90deg,transparent,#334155,transparent);
+    margin:40px 0 28px;
+  }
+
+  .gjl_parallax-title{
+    font-size:16px;font-weight:700;color:#f8fafc;letter-spacing:1px;
+    margin-bottom:6px;text-align:center;
+  }
+  .gjl_parallax-sub{
+    font-size:12px;color:#94a3b8;margin-bottom:20px;text-align:center;letter-spacing:.5px;
+  }
+
+  /* 视差舞台：固定高度，overflow:hidden，多层元素绝对定位 */
+  .gjl_parallax{
+    position:relative;width:100%;max-width:360px;height:220px;
+    border-radius:20px;overflow:hidden;
+    background:linear-gradient(180deg,#1e3a8a 0%,#312e81 50%,#7c2d12 100%);
+    box-shadow:0 16px 40px rgba(0,0,0,.4);
+  }
+  .gjl_layer{
+    position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);
+    transition:transform .08s linear;   /* 轻微过渡，跟手不抖 */
+    will-change:transform;
+    pointer-events:none;
+  }
+  /* 不同层用不同字号/颜色，营造远近 */
+  .gjl_layer--sun{font-size:56px;opacity:.9}
+  .gjl_layer--mountain{font-size:80px;opacity:.85}
+  .gjl_layer--cloud{font-size:32px;opacity:.7}
+  .gjl_layer--tree{font-size:40px;opacity:.9}
+  .gjl_layer--ground{font-size:60px;opacity:.95}
+
+  .gjl_gamma-val{
+    margin-top:14px;font-size:12px;color:#64748b;text-align:center;
+    font-family:Consolas,monospace;
+  }
+
+  /* 首页链接（AGENTS.md 约定） */
+  .gjl_home_link{
+    display:inline-block;margin-top:32px;padding:10px 24px;
+    border-radius:999px;background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.14);color:#93c5fd;
+    text-decoration:none;font-size:13px;letter-spacing:1px;
+  }
+  .gjl_home_link:hover{background:rgba(255,255,255,.14)}
+</style>
+</head>
+<body>
+
+  <header class="gjl_head">
+    <h1>摇一摇彩蛋</h1>
+    <p>葛佳磊 · 24001010612</p>
+  </header>
+
+  <div class="gjl_phone" id="gjl_phone">
+    <span class="gjl_phone-icon">📱</span>
+  </div>
+
+  <p class="gjl_hint" id="gjl_hint">摇一摇手机，抽今日菜谱</p>
+
+  <div class="gjl_result" id="gjl_result">
+    <div class="gjl_dish-name" id="gjl_dishName">—</div>
+    <p class="gjl_dish-desc" id="gjl_dishDesc">—</p>
+  </div>
+
+  <div class="gjl_fallback" id="gjl_fallback" style="display:none">
+    <button class="gjl_btn" id="gjl_btn">点我抽一次</button>
+    <p class="gjl_note">当前设备不支持，请用手机打开</p>
+  </div>
+
+  <!-- iOS 13+ 需要用户点击才能申请传感器权限 -->
+  <div class="gjl_iosperm" id="gjl_iosperm" style="display:none">
+    <button class="gjl_btn" id="gjl_permBtn">请求传感器权限</button>
+    <p class="gjl_note">iOS 需手动授权摇一摇与倾斜</p>
+  </div>
+
+  <div class="gjl_debug" id="gjl_debug"></div>
+
+  <!-- ===== 任务四-B：倾斜视差 ===== -->
+  <div class="gjl_divider"></div>
+
+  <h2 class="gjl_parallax-title">倾斜视差</h2>
+  <p class="gjl_parallax-sub">左右倾斜手机，看山、云、树产生不同速度的位移</p>
+
+  <div class="gjl_parallax" id="gjl_parallax">
+    <!-- 各层的 data-depth 是视差系数，越大移动越多（近大远小） -->
+    <span class="gjl_layer gjl_layer--sun"      data-depth="0.6" style="top:28%">☀️</span>
+    <span class="gjl_layer gjl_layer--cloud"    data-depth="1.2" style="top:35%">☁️</span>
+    <span class="gjl_layer gjl_layer--mountain" data-depth="2.0" style="top:58%">⛰️</span>
+    <span class="gjl_layer gjl_layer--tree"     data-depth="3.0" style="top:72%">🌲</span>
+    <span class="gjl_layer gjl_layer--ground"   data-depth="3.5" style="top:88%">🌾</span>
+  </div>
+
+  <div class="gjl_gamma-val" id="gjl_gammaVal">倾斜角 gamma：—</div>
+
+  <a class="gjl_home_link" href="index.html">← 返回课堂实践中心</a>
+
+<script>
+(function () {
+  'use strict';
+
+  // ========== 元素 ==========
+  var gjl_phone   = document.getElementById('gjl_phone');
+  var gjl_hint    = document.getElementById('gjl_hint');
+  var gjl_result  = document.getElementById('gjl_result');
+  var gjl_name    = document.getElementById('gjl_dishName');
+  var gjl_desc    = document.getElementById('gjl_dishDesc');
+  var gjl_fallback = document.getElementById('gjl_fallback');
+  var gjl_btn     = document.getElementById('gjl_btn');
+  var gjl_debug   = document.getElementById('gjl_debug');
+
+  // 视差相关元素
+  var gjl_parallax = document.getElementById('gjl_parallax');
+  var gjl_layers   = gjl_parallax.querySelectorAll('.gjl_layer');
+  var gjl_gammaVal = document.getElementById('gjl_gammaVal');
+  var gjl_iosperm  = document.getElementById('gjl_iosperm');
+  var gjl_permBtn  = document.getElementById('gjl_permBtn');
+
+  // ========== 菜库 ==========
+  var gjl_menu = [
+    { name: '麻辣小龙虾', desc: '红油翻滚，蒜香与花椒在舌尖炸开，夏夜标配。' },
+    { name: '蟹粉小笼',   desc: '皮薄汁多，一口咬开满嘴蟹粉鲜。' },
+    { name: '抹茶千层',   desc: '层层奶油，微苦回甘，甜品柜里最安静的一块。' },
+    { name: '芝士焗蟹',   desc: '拉丝芝士裹住鲜甜蟹肉，奶香暴击。' },
+    { name: '糖醋里脊',   desc: '外酥里嫩，酸甜开胃，老少通吃。' },
+    { name: '冬阴功汤',   desc: '酸辣鲜香，大虾与香茅的热带风情。' },
+    { name: '黑松露意面', desc: '菌香浓郁，奶油裹住每一根面条。' },
+    { name: '佛跳墙',     desc: '山珍海味同炖一坛，鲜到掉眉毛。' },
+  ];
+
+  // ========== 状态 ==========
+  var gjl_threshold = 18;        // 摇动阈值（合成加速度 m/s²）
+  var gjl_cooldown  = 1500;      // 冷却 1.5s，防止一次摇动重复触发
+  var gjl_locked    = false;     // 冷却锁
+  var gjl_supported = false;     // 是否支持 devicemotion
+
+  // ========== 抽菜 ==========
+  function gjl_pickDish() {
+    var gjl_i = Math.floor(Math.random() * gjl_menu.length);
+    var gjl_dish = gjl_menu[gjl_i];
+    gjl_name.textContent = gjl_dish.name;
+    gjl_desc.textContent = gjl_dish.desc;
+
+    // 弹出动画：先移除再重加，保证每次都能重新触发
+    gjl_result.classList.remove('show');
+    void gjl_result.offsetWidth;   // 强制回流
+    gjl_result.classList.add('show');
+
+    // 手机抖动动画
+    gjl_phone.classList.remove('shake');
+    void gjl_phone.offsetWidth;
+    gjl_phone.classList.add('shake');
+  }
+
+  // ========== 处理摇动事件 ==========
+  function gjl_onMotion(e) {
+    var gjl_acc = e.accelerationIncludingGravity;
+
+    // 部分浏览器返回 null 或全 0，视为不支持
+    if (!gjl_acc || (gjl_acc.x === 0 && gjl_acc.y === 0 && gjl_acc.z === 0)) {
+      gjl_showFallback();
+      return;
+    }
+
+    // 合成加速度 = 三个方向的平方和开根号
+    var gjl_total = Math.sqrt(
+      gjl_acc.x * gjl_acc.x +
+      gjl_acc.y * gjl_acc.y +
+      gjl_acc.z * gjl_acc.z
+    );
+
+    gjl_debug.textContent = '合成加速度：' + gjl_total.toFixed(2) + ' m/s²';
+
+    // 超过阈值且不在冷却中 → 触发
+    if (gjl_total > gjl_threshold && !gjl_locked) {
+      gjl_locked = true;
+      gjl_pickDish();
+      setTimeout(function () { gjl_locked = false; }, gjl_cooldown);
+    }
+  }
+
+  // ========== 降级：显示按钮 ==========
+  function gjl_showFallback() {
+    if (gjl_fallback.style.display === 'block') return;
+    gjl_fallback.style.display = 'block';
+    gjl_hint.textContent = '当前设备不支持摇一摇';
+    gjl_hint.style.color = '#94a3b8';
+    gjl_hint.style.animation = 'none';
+  }
+
+  // ========== 任务四-B：倾斜视差 ==========
+  // deviceorientation 事件的 gamma 表示设备左右倾斜角（-90 ~ 90 度）
+  // 每层按 data-depth 系数平移，系数越大移动越多 → 近大远小的视差
+  function gjl_onOrientation(e) {
+    var gjl_gamma = e.gamma;   // 左右倾斜
+    if (gjl_gamma === null || isNaN(gjl_gamma)) return;
+
+    // 限制 gamma 在 [-45, 45]，避免倾斜过头时位移过大
+    gjl_gamma = Math.max(-45, Math.min(45, gjl_gamma));
+    gjl_gammaVal.textContent = '倾斜角 gamma：' + gjl_gamma.toFixed(1) + '°';
+
+    // 每层位移 = gamma × 系数（px），系数来自 data-depth
+    gjl_layers.forEach(function (gjl_layer) {
+      var gjl_depth = parseFloat(gjl_layer.dataset.depth) || 1;
+      var gjl_offset = gjl_gamma * gjl_depth;
+      // 保留原本的居中 translate(-50%,-50%)，再叠加横向位移
+      gjl_layer.style.transform =
+        'translate(calc(-50% + ' + gjl_offset + 'px), -50%)';
+    });
+  }
+
+  // ========== iOS 权限申请（iOS 13+ 需要用户手动授权） ==========
+  // 同时申请 devicemotion 和 deviceorientation 两个传感器
+  function gjl_requestIOSPermission() {
+    var gjl_hasMotion = (typeof DeviceMotionEvent !== 'undefined' &&
+                         typeof DeviceMotionEvent.requestPermission === 'function');
+    var gjl_hasOrient = (typeof DeviceOrientationEvent !== 'undefined' &&
+                         typeof DeviceOrientationEvent.requestPermission === 'function');
+
+    if (!gjl_hasMotion && !gjl_hasOrient) return false;
+
+    // 用 Promise.all 同时申请两个权限
+    var gjl_reqs = [];
+    if (gjl_hasMotion) gjl_reqs.push(DeviceMotionEvent.requestPermission());
+    if (gjl_hasOrient) gjl_reqs.push(DeviceOrientationEvent.requestPermission());
+
+    Promise.all(gjl_reqs).then(function (states) {
+      // 第一个是 motion 状态（如果存在）
+      var gjl_motionOk = gjl_hasMotion ? states[0] === 'granted' : true;
+      var gjl_orientIdx = gjl_hasMotion ? 1 : 0;
+      var gjl_orientOk = gjl_hasOrient ? states[gjl_orientIdx] === 'granted' : true;
+
+      if (gjl_motionOk) {
+        window.addEventListener('devicemotion', gjl_onMotion);
+      } else {
+        gjl_showFallback();
+      }
+      if (gjl_orientOk) {
+        window.addEventListener('deviceorientation', gjl_onOrientation);
+      }
+    }).catch(function () {
+      gjl_showFallback();
+    });
+
+    return true;   // 已尝试申请
+  }
+
+  // ========== 初始化 ==========
+  function gjl_init() {
+    // 判断是否支持 devicemotion
+    if (typeof window.DeviceMotionEvent === 'undefined') {
+      gjl_showFallback();
+    } else {
+      gjl_supported = true;
+    }
+
+    // 判断是否为 iOS 13+（需要按钮触发权限申请）
+    var gjl_isIOS13 = (typeof DeviceMotionEvent !== 'undefined' &&
+                       typeof DeviceMotionEvent.requestPermission === 'function') ||
+                      (typeof DeviceOrientationEvent !== 'undefined' &&
+                       typeof DeviceOrientationEvent.requestPermission === 'function');
+
+    if (gjl_isIOS13) {
+      // iOS：显示权限按钮，点击后才申请（必须在用户手势里调用）
+      gjl_iosperm.style.display = 'block';
+      gjl_permBtn.addEventListener('click', function () {
+        gjl_requestIOSPermission();
+        gjl_iosperm.style.display = 'none';
+      });
+    } else {
+      // 安卓 / 桌面：直接监听两个事件
+      if (typeof window.DeviceMotionEvent !== 'undefined') {
+        window.addEventListener('devicemotion', gjl_onMotion);
+      }
+      if (typeof window.DeviceOrientationEvent !== 'undefined') {
+        window.addEventListener('deviceorientation', gjl_onOrientation);
+      }
+
+      // 桌面浏览器通常没有加速度数据，等一会儿看有没有数据进来
+      setTimeout(function () {
+        if (gjl_debug.textContent === '') {
+          gjl_showFallback();
+        }
+      }, 1500);
+    }
+
+    // 降级按钮：点击也能抽菜
+    gjl_btn.addEventListener('click', function () {
+      if (!gjl_locked) {
+        gjl_locked = true;
+        gjl_pickDish();
+        setTimeout(function () { gjl_locked = false; }, gjl_cooldown);
+      }
+    });
+  }
+
+  gjl_init();
+})();
+</script>
+
+</body>
+</html>

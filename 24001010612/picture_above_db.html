@@ -1,0 +1,251 @@
+<!--
+  作者：葛佳磊
+  建立时间：2026-11-12 13:46
+  使用模型：DeepSeek-V4.1-Flash
+  功能名称及简介：上图下文 · 本地数据展示页 —— 通过本地 3004 端口数据服务器读取
+  db/db.json 中 poems 的图片、标题与正文，以「图片在上、文字在下」的卡片结构渲染
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="上图下文布局 · 数据来自本地 db/db.json 的 poems">
+  <title>上图下文 · 本地数据展示</title>
+  <style>
+    :root {
+      --gjl_ink: #18332f;
+      --gjl_green: #245b4f;
+      --gjl_mint: #dce9df;
+      --gjl_coral: #e9785c;
+      --gjl_cream: #f7f1e7;
+      --gjl_paper: #fffdf8;
+      --gjl_line: #d8d5c9;
+      --gjl_muted: #6e746d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--gjl_ink);
+      background: var(--gjl_cream);
+      font-family: "Songti SC", "STSong", Georgia, serif;
+      line-height: 1.7;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .gjl_page { min-height: 100vh; background: linear-gradient(120deg, #f7f1e7 0%, #fffdf8 55%, #e9f0e6 100%); }
+    .gjl_wrap { width: min(1120px, calc(100% - 44px)); margin: 0 auto; }
+
+    /* 页头：标题、说明与启动提示 */
+    .gjl_header { padding: 54px 0 46px; background: var(--gjl_green); color: #fffdf8; }
+    .gjl_eyebrow {
+      margin: 0 0 12px;
+      color: #ffd2c6;
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      letter-spacing: 3px;
+    }
+    .gjl_title { margin: 0; font-size: clamp(32px, 5vw, 52px); line-height: 1.15; font-weight: 600; }
+    .gjl_lead { max-width: 640px; margin: 18px 0 0; color: #d7e7d9; font-size: 16px; }
+    .gjl_actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 26px; }
+    .gjl_home_link {
+      display: inline-block;
+      padding: 9px 18px;
+      color: var(--gjl_green);
+      background: var(--gjl_coral);
+      border-radius: 2px;
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      font-weight: bold;
+      transition: transform 180ms ease;
+    }
+    .gjl_home_link:hover { transform: translateX(-3px); }
+    .gjl_code {
+      padding: 5px 10px;
+      background: rgba(255, 255, 255, .14);
+      border: 1px solid rgba(255, 255, 255, .3);
+      border-radius: 2px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      letter-spacing: 0;
+    }
+
+    /* 状态提示条 */
+    .gjl_main { padding: 42px 0 68px; }
+    .gjl_status {
+      margin: 0 0 26px;
+      padding: 12px 18px;
+      color: var(--gjl_muted);
+      background: rgba(255, 255, 255, .7);
+      border-left: 4px solid var(--gjl_green);
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+    }
+    .gjl_status_error { color: #b4462c; border-left-color: var(--gjl_coral); }
+    .gjl_status .gjl_code { color: var(--gjl_green); background: var(--gjl_mint); border-color: var(--gjl_line); }
+
+    /* 卡片列表：每张卡片「图片在上、文字在下」 */
+    .gjl_list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 26px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .gjl_card {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--gjl_paper);
+      border: 1px solid var(--gjl_line);
+      border-radius: 3px;
+      box-shadow: 7px 7px 0 rgba(36, 91, 79, .08);
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+    .gjl_card:hover { transform: translate(-3px, -5px); box-shadow: 12px 13px 0 rgba(36, 91, 79, .14); }
+
+    .gjl_pic {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      background: var(--gjl_mint);
+      border-bottom: 1px solid var(--gjl_line);
+    }
+    .gjl_pic_fail { background: repeating-linear-gradient(45deg, #eef3ec 0 10px, #e2ebe2 10px 20px); }
+
+    .gjl_text { padding: 18px 22px 24px; }
+    .gjl_card_title { margin: 0 0 8px; font-size: 21px; line-height: 1.3; font-weight: 600; }
+    .gjl_card_content { margin: 0; color: var(--gjl_muted); font-size: 14px; }
+
+    .gjl_footer {
+      padding: 22px 0 30px;
+      color: var(--gjl_muted);
+      border-top: 1px solid var(--gjl_line);
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .gjl_list { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 620px) {
+      .gjl_wrap { width: calc(100% - 28px); }
+      .gjl_header { padding: 38px 0 32px; }
+      .gjl_list { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="gjl_page">
+    <header class="gjl_header">
+      <div class="gjl_wrap">
+        <p class="gjl_eyebrow">LOCAL DATA · PORT 3004</p>
+        <h1 class="gjl_title">上图下文 · 本地数据</h1>
+        <p class="gjl_lead">本页通过本地数据服务器（db/server.js，端口 3004）读取 db/db.json 中 poems 的图片、标题与正文，按「图片在上、文字在下」的结构渲染。</p>
+        <div class="gjl_actions">
+          <a class="gjl_home_link" href="index.html">← 返回课堂首页</a>
+          <code class="gjl_code">node db/server.js</code>
+        </div>
+      </div>
+    </header>
+
+    <main class="gjl_main gjl_wrap">
+      <!-- 数据加载状态提示，加载成功后显示条数 -->
+      <p class="gjl_status" id="gjl_status">正在从 http://localhost:3004/api/poems 加载数据…</p>
+      <!-- 卡片列表由脚本按 poems 数据动态生成 -->
+      <ul class="gjl_list" id="gjl_list"></ul>
+    </main>
+
+    <footer class="gjl_footer">
+      <div class="gjl_wrap">葛佳磊 · 上图下文布局练习 · 数据来源：db/db.json → poems</div>
+    </footer>
+  </div>
+
+  <script>
+    /* 作者：葛佳磊 | 建立时间：2026-11-12 13:46 | 使用模型：DeepSeek-V4.1-Flash
+       功能：gjl_renderPoems —— 把服务器返回的 poems 数组渲染成「上图下文」卡片：
+       图片在上、标题与正文在下；图片加载失败时给出占位样式，保证结构完整 */
+    function gjl_renderPoems(gjl_poems) {
+      var gjl_list = document.getElementById('gjl_list');
+      var gjl_status = document.getElementById('gjl_status');
+
+      gjl_list.innerHTML = '';
+
+      if (!gjl_poems || gjl_poems.length === 0) {
+        gjl_status.textContent = '服务器返回的 poems 数据为空，请检查 db/db.json。';
+        return;
+      }
+
+      // 用 forEach 逐条生成卡片，保持顺序与 db.json 一致
+      gjl_poems.forEach(function (gjl_item) {
+        var gjl_li = document.createElement('li');
+        gjl_li.className = 'gjl_card';
+
+        // 上图：poems 中的 pic 字段作为图片地址
+        var gjl_img = document.createElement('img');
+        gjl_img.className = 'gjl_pic';
+        gjl_img.src = gjl_item.pic;
+        gjl_img.alt = gjl_item.title || '展品图片';
+        gjl_img.loading = 'lazy';
+        gjl_img.referrerPolicy = 'no-referrer'; // 避免图床按 Referer 做防盗链拦截
+        gjl_img.addEventListener('error', function () {
+          gjl_img.classList.add('gjl_pic_fail');
+          gjl_img.alt = '图片加载失败：' + gjl_item.pic;
+        });
+
+        // 下文：标题 + 正文
+        var gjl_text = document.createElement('div');
+        gjl_text.className = 'gjl_text';
+
+        var gjl_h2 = document.createElement('h2');
+        gjl_h2.className = 'gjl_card_title';
+        gjl_h2.textContent = gjl_item.title;
+
+        var gjl_p = document.createElement('p');
+        gjl_p.className = 'gjl_card_content';
+        gjl_p.textContent = gjl_item.content;
+
+        gjl_text.appendChild(gjl_h2);
+        gjl_text.appendChild(gjl_p);
+
+        gjl_li.appendChild(gjl_img);
+        gjl_li.appendChild(gjl_text);
+        gjl_list.appendChild(gjl_li);
+      });
+
+      gjl_status.textContent = '已从本地服务器加载 ' + gjl_poems.length + ' 条数据。';
+    }
+
+    /* 作者：葛佳磊 | 建立时间：2026-11-12 13:46 | 使用模型：DeepSeek-V4.1-Flash
+       功能：gjl_loadPoems —— 用 fetch 请求本地 3004 端口的 /api/poems 接口获取数据；
+       请求失败时提示需要先启动 db/server.js */
+    function gjl_loadPoems() {
+      var gjl_status = document.getElementById('gjl_status');
+
+      fetch('http://localhost:3004/api/poems')
+        .then(function (gjl_res) {
+          if (!gjl_res.ok) {
+            throw new Error('HTTP ' + gjl_res.status);
+          }
+          return gjl_res.json();
+        })
+        .then(function (gjl_data) {
+          gjl_renderPoems(Array.isArray(gjl_data) ? gjl_data : gjl_data.poems);
+        })
+        .catch(function (gjl_err) {
+          gjl_status.className = 'gjl_status gjl_status_error';
+          gjl_status.innerHTML = '数据加载失败：' + gjl_err.message +
+            '。请先在项目根目录执行 <code class="gjl_code">node db/server.js</code> 启动数据服务器（端口 3004），再刷新本页。';
+        });
+    }
+
+    // 页面结构加载完成后立即请求数据
+    document.addEventListener('DOMContentLoaded', gjl_loadPoems);
+  </script>
+</body>
+</html>

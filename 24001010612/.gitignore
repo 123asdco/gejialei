@@ -1,3 +1,7 @@
 # 防止 Gitee 令牌随项目提交（git-push-gitee skill 含私人令牌）
 .trae/skills/git-push-gitee/
 .gitee-token.local
+
+# Node 依赖
+node_modules/
+db/node_modules/

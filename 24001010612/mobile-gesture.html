@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>移动端美食卡片 · 手势滑动</title>
+<!--
+  文件：mobile-gesture.html
+  姓名：葛佳磊        学号：24001010612
+  日期：2026-11-16
+  功能：移动端美食卡片，监听 touchstart / touchend，
+        用 changedTouches[0] 计算横向位移，阈值 40px，
+        左滑下一张、右滑上一张，边界给出提示，
+        切换有 0.3s 过渡，并用 300ms 冷却防止一次跳两张。
+-->
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+  body{
+    font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    background:#0f172a;
+    background-image:radial-gradient(circle at 20% 0%,#1e3a8a 0%,transparent 45%),
+                     radial-gradient(circle at 90% 100%,#4c1d95 0%,transparent 45%);
+    color:#e2e8f0;
+    min-height:100vh;
+  }
+
+  .gjl_page{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* 页头：姓名学号 */
+  .gjl_head{
+    padding:20px 20px 8px;
+    text-align:center;
+  }
+  .gjl_head h1{
+    font-size:18px;
+    font-weight:700;
+    letter-spacing:1px;
+    color:#f8fafc;
+  }
+  .gjl_head p{
+    margin-top:6px;
+    font-size:12px;
+    color:#94a3b8;
+    letter-spacing:.5px;
+  }
+
+  /* 卡片区：只允许纵向手势交给页面滚动 */
+  .gjl_main{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:12px 20px;
+  }
+
+  .gjl_card-area{
+    width:100%;
+    max-width:400px;
+    height:440px;
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.45);
+    touch-action:pan-y;              /* 横向手势自己处理，纵向留给页面滚动 */
+    position:relative;
+  }
+
+  .gjl_track{
+    display:flex;
+    height:100%;
+    transition:transform .3s ease;    /* 切换过渡 0.3s */
+    will-change:transform;
+  }
+
+  .gjl_card{
+    flex:0 0 100%;
+    height:100%;
+    padding:28px 26px;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+    position:relative;
+    color:#fff;
+    text-shadow:0 1px 3px rgba(0,0,0,.25);
+  }
+
+  /* 4 道菜各自的渐变背景 */
+  .gjl_card--1{background:linear-gradient(135deg,#ff5f6d 0%,#ffc371 100%)}
+  .gjl_card--2{background:linear-gradient(135deg,#f7971e 0%,#ffd200 100%)}
+  .gjl_card--3{background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%)}
+  .gjl_card--4{background:linear-gradient(135deg,#4568dc 0%,#b06ab3 100%)}
+
+  .gjl_card-no{
+    position:absolute;
+    top:18px;
+    right:22px;
+    font-size:64px;
+    font-weight:800;
+    line-height:1;
+    opacity:.22;
+  }
+
+  .gjl_card-emoji{
+    font-size:72px;
+    line-height:1;
+    margin-bottom:auto;
+  }
+
+  .gjl_card-name{
+    font-size:26px;
+    font-weight:800;
+    letter-spacing:1px;
+    margin-bottom:10px;
+  }
+
+  .gjl_card-desc{
+    font-size:14px;
+    line-height:1.9;
+    opacity:.92;
+    text-shadow:none;
+  }
+
+  /* 底部计数 */
+  .gjl_foot{
+    padding:4px 20px 28px;
+    text-align:center;
+  }
+
+  .gjl_counter{
+    display:inline-block;
+    padding:8px 22px;
+    border-radius:999px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.14);
+    font-size:14px;
+    letter-spacing:1px;
+    color:#e2e8f0;
+  }
+
+  .gjl_hint{
+    margin-top:12px;
+    font-size:12px;
+    color:#64748b;
+    letter-spacing:1px;
+  }
+
+  /* 边界提示 */
+  .gjl_toast{
+    position:fixed;
+    left:50%;
+    bottom:22%;
+    transform:translate(-50%,10px);
+    padding:10px 20px;
+    border-radius:10px;
+    background:rgba(15,23,42,.92);
+    border:1px solid rgba(148,163,184,.3);
+    color:#f1f5f9;
+    font-size:13px;
+    letter-spacing:1px;
+    white-space:nowrap;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s ease,transform .25s ease;
+  }
+  .gjl_toast--show{
+    opacity:1;
+    transform:translate(-50%,0);
+  }
+</style>
+</head>
+<body>
+
+<div class="gjl_page">
+
+  <header class="gjl_head">
+    <h1>今日美食 · 手势轮播</h1>
+    <p>葛佳磊 · 24001010612</p>
+  </header>
+
+  <main class="gjl_main">
+    <div class="gjl_card-area" id="gjl_cardArea">
+      <div class="gjl_track" id="gjl_track">
+
+        <section class="gjl_card gjl_card--1">
+          <span class="gjl_card-no">01</span>
+          <span class="gjl_card-emoji">🦞</span>
+          <h2 class="gjl_card-name">麻辣小龙虾</h2>
+          <p class="gjl_card-desc">红油翻滚，麻辣鲜香，蒜香与花椒在舌尖炸开。夏夜大排档的灵魂，配冰啤酒刚刚好。</p>
+        </section>
+
+        <section class="gjl_card gjl_card--2">
+          <span class="gjl_card-no">02</span>
+          <span class="gjl_card-emoji">🥟</span>
+          <h2 class="gjl_card-name">蟹粉小笼</h2>
+          <p class="gjl_card-desc">皮薄如纸，十八道褶，一口咬开满嘴蟹粉汤汁。先开窗、后吸汤，是江南人的讲究。</p>
+        </section>
+
+        <section class="gjl_card gjl_card--3">
+          <span class="gjl_card-no">03</span>
+          <span class="gjl_card-emoji">🍵</span>
+          <h2 class="gjl_card-name">抹茶千层</h2>
+          <p class="gjl_card-desc">二十层薄饼夹着轻盈奶油，抹茶微苦，回甘悠长。甜品柜里最安静的那一块。</p>
+        </section>
+
+        <section class="gjl_card gjl_card--4">
+          <span class="gjl_card-no">04</span>
+          <span class="gjl_card-emoji">🦀</span>
+          <h2 class="gjl_card-name">芝士焗帝王蟹</h2>
+          <p class="gjl_card-desc">蟹肉鲜甜，芝士拉丝，高温焗出焦香外壳。一勺挖下去，是海与奶香的双重暴击。</p>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="gjl_foot">
+    <span class="gjl_counter" id="gjl_counter">第 1/4 张</span>
+    <p class="gjl_hint">左滑下一张 · 右滑上一张</p>
+  </footer>
+
+</div>
+
+<div class="gjl_toast" id="gjl_toast"></div>
+
+<script>
+(function () {
+  // ===== 元素 =====
+  var gjl_area    = document.getElementById('gjl_cardArea');
+  var gjl_track   = document.getElementById('gjl_track');
+  var gjl_counter = document.getElementById('gjl_counter');
+  var gjl_toast   = document.getElementById('gjl_toast');
+
+  // ===== 状态 =====
+  var gjl_total  = 4;      // 卡片总数
+  var gjl_index  = 0;      // 当前第几张（0 起）
+  var gjl_startX = 0;      // 触摸起点 X
+  var gjl_startY = 0;      // 触摸起点 Y
+  var gjl_locked = false;  // 300ms 冷却锁，防止快速连滑跳两张
+  var gjl_toastTimer = null;
+
+  // 渲染：移动轨道 + 更新计数
+  function gjl_render() {
+    gjl_track.style.transform = 'translateX(' + (-gjl_index * 100) + '%)';
+    gjl_counter.textContent = '第 ' + (gjl_index + 1) + '/' + gjl_total + ' 张';
+  }
+
+  // 边界提示
+  function gjl_showToast(gjl_msg) {
+    gjl_toast.textContent = gjl_msg;
+    gjl_toast.classList.add('gjl_toast--show');
+    clearTimeout(gjl_toastTimer);
+    gjl_toastTimer = setTimeout(function () {
+      gjl_toast.classList.remove('gjl_toast--show');
+    }, 1200);
+  }
+
+  // 切换一张：gjl_dir 为 1 下一张、-1 上一张
+  function gjl_go(gjl_dir) {
+    var gjl_target = gjl_index + gjl_dir;
+
+    if (gjl_target < 0) {
+      gjl_showToast('已经是第一张');
+      return;
+    }
+    if (gjl_target > gjl_total - 1) {
+      gjl_showToast('已经是最后一张');
+      return;
+    }
+
+    gjl_index = gjl_target;
+    gjl_render();
+  }
+
+  // 手指按下：记录起点坐标
+  gjl_area.addEventListener('touchstart', function (e) {
+    var gjl_touch = e.changedTouches[0];
+    gjl_startX = gjl_touch.clientX;
+    gjl_startY = gjl_touch.clientY;
+  }, { passive: true });
+
+  // 手指抬起：计算位移并判断方向
+  gjl_area.addEventListener('touchend', function (e) {
+    if (gjl_locked) return;   // 冷却期内直接忽略，避免一次跳两张
+
+    var gjl_touch = e.changedTouches[0];
+    var gjl_dx = gjl_touch.clientX - gjl_startX;   // 横向位移
+    var gjl_dy = gjl_touch.clientY - gjl_startY;   // 纵向位移
+
+    // 纵向滑动优先：这次手势是滚页面，不切卡片
+    if (Math.abs(gjl_dy) > Math.abs(gjl_dx)) return;
+
+    // 横向位移没超过 40px 阈值，视为误触
+    if (Math.abs(gjl_dx) < 40) return;
+
+    gjl_locked = true;
+    setTimeout(function () {
+      gjl_locked = false;
+    }, 300);
+
+    if (gjl_dx < 0) {
+      gjl_go(1);    // 左滑 → 下一张
+    } else {
+      gjl_go(-1);   // 右滑 → 上一张
+    }
+  }, { passive: true });
+
+  // 初始化
+  gjl_render();
+})();
+</script>
+
+</body>
+</html>

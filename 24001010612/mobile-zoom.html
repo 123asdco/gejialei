@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>移动端图片查看器 · 双指缩放</title>
+<!--
+  文件：mobile-zoom.html
+  姓名：葛佳磊        学号：24001010612
+  日期：2026-11-16
+  功能：移动端图片查看器
+    1) 双指捏合缩放（1~4 倍），以两指中点为基准
+    2) 单指拖动（仅在放大后），松手后自动收回边界内
+    3) 双击在 1x / 2x 间切换，带 0.25s 过渡
+  变量、类名、id 一律以 gjl_ 开头。
+-->
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#000;color:#e2e8f0;
+    font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    overflow:hidden}
+
+  .gjl_page{height:100vh;display:flex;flex-direction:column}
+
+  .gjl_head{padding:14px 16px;text-align:center;flex-shrink:0}
+  .gjl_head h1{font-size:16px;font-weight:700;letter-spacing:1px;color:#f8fafc}
+  .gjl_head p{margin-top:4px;font-size:11px;color:#94a3b8;letter-spacing:.5px}
+  .gjl_head .gjl_tip{margin-top:8px;font-size:12px;color:#fbbf24}
+
+  /* 查看器容器：禁止所有浏览器默认手势（滚动/双击放大/文本选中） */
+  .gjl_viewer{
+    flex:1;position:relative;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    background:#111;
+    touch-action:none;          /* 交给 JS 处理，不让浏览器插手 */
+    -webkit-user-select:none;   /* 禁止选中 */
+    user-select:none;
+    -webkit-touch-callout:none; /* 禁止长按菜单 */
+  }
+
+  /* 大图：用 flex 居中，transform 只做平移 + 缩放 */
+  .gjl_img{
+    max-width:100%;max-height:100%;
+    transform-origin:center center;
+    will-change:transform;
+    pointer-events:none;        /* 图片不抢事件，事件统一由容器处理 */
+  }
+
+  /* 打开时的提示浮层 */
+  .gjl_toast{
+    position:fixed;left:50%;top:46%;
+    transform:translate(-50%,-50%);
+    padding:12px 22px;border-radius:12px;
+    background:rgba(15,23,42,.92);
+    border:1px solid rgba(148,163,184,.3);
+    color:#f1f5f9;font-size:14px;letter-spacing:1px;
+    opacity:0;pointer-events:none;
+    transition:opacity .3s ease;
+    z-index:99;white-space:nowrap;
+  }
+  .gjl_toast--show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="gjl_page">
+  <header class="gjl_head">
+    <h1>图片查看器 · 手势缩放</h1>
+    <p>葛佳磊 · 24001010612</p>
+    <p class="gjl_tip">双指缩放 · 单指拖动 · 双击放大</p>
+  </header>
+
+  <!-- 查看器：事件都绑在这里 -->
+  <div class="gjl_viewer" id="gjl_viewer">
+    <img class="gjl_img" id="gjl_img" src="swiper-imgs/moduhao_1.jpg" alt="魔都号" draggable="false">
+  </div>
+</div>
+
+<div class="gjl_toast" id="gjl_toast">双指缩放请用手机打开</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ========== 元素 ==========
+  var gjl_viewer = document.getElementById('gjl_viewer');
+  var gjl_img    = document.getElementById('gjl_img');
+  var gjl_toast  = document.getElementById('gjl_toast');
+
+  // ========== 状态（单一数据源，所有交互只改它，再统一 render）==========
+  var gjl_scale = 1;     // 当前缩放倍数 1~4
+  var gjl_panX  = 0;     // 横向平移 px
+  var gjl_panY  = 0;     // 纵向平移 px
+
+  // ========== 触摸过程中的临时量 ==========
+  var gjl_mode = '';          // 'pinch' | 'pan' | ''
+  var gjl_startDist = 0;      // 双指初始距离
+  var gjl_startScale = 1;     // 捏合开始时的 scale
+  var gjl_anchorX = 0;        // 捏合锚点在图片坐标系中的 X（相对图片中心）
+  var gjl_anchorY = 0;        // 捏合锚点在图片坐标系中的 Y
+
+  var gjl_panStartX = 0;      // 单指拖动起点 X
+  var gjl_panStartY = 0;      // 单指拖动起点 Y
+  var gjl_panBaseX  = 0;      // 拖动开始时的 panX
+  var gjl_panBaseY  = 0;      // 拖动开始时的 panY
+
+  var gjl_lastTapTime = 0;    // 上一次点击时间（双击判定）
+  var gjl_lastTapX = 0;
+  var gjl_lastTapY = 0;
+
+  // ========== 工具函数 ==========
+  // 两指欧氏距离
+  function gjl_dist(t1, t2) {
+    var dx = t1.clientX - t2.clientX;
+    var dy = t1.clientY - t2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  // 限制值范围
+  function gjl_clamp(v, min, max) {
+    return Math.min(max, Math.max(min, v));
+  }
+
+  // 计算图片在 scale=1 时的显示尺寸（object-fit: contain 等价算法）
+  function gjl_baseSize() {
+    var iw = gjl_img.naturalWidth;
+    var ih = gjl_img.naturalHeight;
+    var vw = gjl_viewer.clientWidth;
+    var vh = gjl_viewer.clientHeight;
+    var fit = Math.min(vw / iw, vh / ih);
+    return { w: iw * fit, h: ih * fit };
+  }
+
+  // 把 pan 限制在边界内（放大后才允许拖动，否则归零）
+  function gjl_clampPan() {
+    var base = gjl_baseSize();
+    var vw = gjl_viewer.clientWidth;
+    var vh = gjl_viewer.clientHeight;
+    var sw = base.w * gjl_scale;
+    var sh = base.h * gjl_scale;
+
+    var maxX = Math.max(0, (sw - vw) / 2);
+    var maxY = Math.max(0, (sh - vh) / 2);
+
+    gjl_panX = gjl_clamp(gjl_panX, -maxX, maxX);
+    gjl_panY = gjl_clamp(gjl_panY, -maxY, maxY);
+  }
+
+  // 唯一渲染入口：只用 state 生成 transform
+  function gjl_render() {
+    gjl_img.style.transform =
+      'translate(' + gjl_panX + 'px,' + gjl_panY + 'px) scale(' + gjl_scale + ')';
+  }
+
+  // 设置过渡：拖动/捏合时关闭（跟手），双击/回边界时开启（动画）
+  function gjl_setTransition(on) {
+    gjl_img.style.transition = on ? 'transform .25s ease' : 'none';
+  }
+
+  // 显示提示
+  function gjl_showToast(msg, ms) {
+    gjl_toast.textContent = msg;
+    gjl_toast.classList.add('gjl_toast--show');
+    clearTimeout(gjl_toast._t);
+    gjl_toast._t = setTimeout(function () {
+      gjl_toast.classList.remove('gjl_toast--show');
+    }, ms || 2500);
+  }
+
+  // ========== 手势处理 ==========
+
+  // 手指按下：判断是单指拖动还是双指捏合
+  gjl_viewer.addEventListener('touchstart', function (e) {
+    gjl_setTransition(false);   // 交互开始，关闭过渡，保证跟手
+
+    if (e.touches.length >= 2) {
+      // ---- 双指：进入捏合模式 ----
+      gjl_mode = 'pinch';
+      var t1 = e.touches[0];
+      var t2 = e.touches[1];
+      gjl_startDist = gjl_dist(t1, t2);
+      gjl_startScale = gjl_scale;
+
+      // 两指中点（相对容器）
+      var mx = (t1.clientX + t2.clientX) / 2;
+      var my = (t1.clientY + t2.clientY) / 2;
+      var cx = gjl_viewer.clientWidth / 2;
+      var cy = gjl_viewer.clientHeight / 2;
+
+      // 算出中点在「图片本地坐标系」里的位置（相对图片中心）
+      // 公式：屏幕点 = 容器中心 + pan + scale * 图片本地坐标
+      // 反推：图片本地坐标 = (屏幕点 - 容器中心 - pan) / scale
+      gjl_anchorX = (mx - cx - gjl_panX) / gjl_scale;
+      gjl_anchorY = (my - cy - gjl_panY) / gjl_scale;
+
+    } else if (e.touches.length === 1 && gjl_scale > 1) {
+      // ---- 单指且已放大：进入拖动模式 ----
+      gjl_mode = 'pan';
+      var t = e.touches[0];
+      gjl_panStartX = t.clientX;
+      gjl_panStartY = t.clientY;
+      gjl_panBaseX  = gjl_panX;
+      gjl_panBaseY  = gjl_panY;
+
+    } else {
+      gjl_mode = '';
+    }
+  }, { passive: false });
+
+  // 手指移动：按模式处理
+  gjl_viewer.addEventListener('touchmove', function (e) {
+    e.preventDefault();   // 阻止页面滚动 / 系统手势
+
+    if (gjl_mode === 'pinch' && e.touches.length >= 2) {
+      var t1 = e.touches[0];
+      var t2 = e.touches[1];
+      var curDist = gjl_dist(t1, t2);
+
+      // 关键：用 起始比例 * 当前距离/起始距离，而不是逐步累乘
+      // 这样不会因浮点误差产生「缩放漂移/跳变」
+      var newScale = gjl_startScale * (curDist / gjl_startDist);
+      newScale = gjl_clamp(newScale, 1, 4);
+
+      // 当前两指中点
+      var mx = (t1.clientX + t2.clientX) / 2;
+      var my = (t1.clientY + t2.clientY) / 2;
+      var cx = gjl_viewer.clientWidth / 2;
+      var cy = gjl_viewer.clientHeight / 2;
+
+      // 让「图片锚点」始终落在「当前两指中点」上 → 缩放基准跟手，不跳
+      gjl_panX = mx - cx - newScale * gjl_anchorX;
+      gjl_panY = my - cy - newScale * gjl_anchorY;
+      gjl_scale = newScale;
+
+      // 缩到 1 倍时直接归零平移
+      if (gjl_scale <= 1) { gjl_panX = 0; gjl_panY = 0; }
+
+      gjl_render();
+
+    } else if (gjl_mode === 'pan' && e.touches.length === 1) {
+      var t = e.touches[0];
+      // 拖动：pan = 起始 pan + 手指位移
+      gjl_panX = gjl_panBaseX + (t.clientX - gjl_panStartX);
+      gjl_panY = gjl_panBaseY + (t.clientY - gjl_panStartY);
+      gjl_render();
+    }
+  }, { passive: false });
+
+  // 手指抬起：结束模式、收回边界、双击判定
+  gjl_viewer.addEventListener('touchend', function (e) {
+    var wasPinch = (gjl_mode === 'pinch');
+    gjl_mode = '';
+
+    // 如果还有手指按着，不结束（多指增减时保持）
+    if (e.touches.length > 0) return;
+
+    // 缩放或拖动结束后，用动画把图片收回边界内
+    gjl_setTransition(true);
+    gjl_clampPan();
+    gjl_render();
+
+    // ---- 双击判定：1x 与 2x 切换 ----
+    if (e.changedTouches.length === 1) {
+      var t = e.changedTouches[0];
+      var now = Date.now();
+      var dt  = now - gjl_lastTapTime;
+      var dx  = t.clientX - gjl_lastTapX;
+      var dy  = t.clientY - gjl_lastTapY;
+
+      // 300ms 内且位移 < 30px 视为双击
+      if (dt < 300 && dt > 0 && Math.abs(dx) < 30 && Math.abs(dy) < 30) {
+        gjl_handleDoubleTap(t.clientX, t.clientY);
+        gjl_lastTapTime = 0;   // 重置，避免三连击
+      } else {
+        gjl_lastTapTime = now;
+        gjl_lastTapX = t.clientX;
+        gjl_lastTapY = t.clientY;
+      }
+    }
+  });
+
+  // 双击：在 1x 与 2x 之间切换，并以点击点为锚点
+  function gjl_handleDoubleTap(x, y) {
+    gjl_setTransition(true);   // 0.25s 过渡动画
+    var cx = gjl_viewer.clientWidth / 2;
+    var cy = gjl_viewer.clientHeight / 2;
+
+    if (gjl_scale > 1) {
+      // 当前放大 → 回到 1x
+      gjl_scale = 1;
+      gjl_panX = 0;
+      gjl_panY = 0;
+    } else {
+      // 当前 1x → 放大到 2x，锚点就是点击点
+      gjl_scale = 2;
+      // 图片本地坐标 = (点击点 - 容器中心) / 旧scale(=1)
+      // 放大后要让该点仍在点击点：pan = 点击点 - 容器中心 - 新scale * 本地坐标
+      gjl_panX = x - cx - 2 * (x - cx);   // = cx - x
+      gjl_panY = y - cy - 2 * (y - cy);   // = cy - y
+      gjl_clampPan();
+    }
+    gjl_render();
+  }
+
+  // ========== 初始化 ==========
+  function gjl_init() {
+    gjl_render();
+    gjl_showToast('双指缩放请用手机打开', 2600);
+  }
+
+  if (gjl_img.complete) {
+    gjl_init();
+  } else {
+    gjl_img.addEventListener('load', gjl_init);
+  }
+})();
+</script>
+
+</body>
+</html>

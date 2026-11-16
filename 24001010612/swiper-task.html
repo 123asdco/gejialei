@@ -481,6 +481,64 @@ releaseOnEdges 三个参数的作用。</code></pre>
         ④ 把 <code>autoplay.delay</code> 从 3200 改成 1000，轮播会每秒翻一张，节奏变快。</p>
       </div>
     </details>
+
+    <details>
+      <summary>📖 任务三 · 代码逐段解析（答辩用）</summary>
+      <div class="wy-prompt">
+        <p><b>① 魔都号展品 —— HTML 结构（4 个轮播各加一张）</b><br>
+        位置：演示一 <code>#wySw1</code>、演示二 <code>#wySw2</code>、演示三 <code>#wySw3</code>、演示四 <code>#wySw4</code> 的 <code>.swiper-wrapper</code> 末尾。</p>
+        <pre><code>&lt;div class="swiper-slide"&gt;
+  &lt;img src="swiper-imgs/moduhao_1.jpg" alt="魔都号"&gt;
+  &lt;div class="wy-cap"&gt;&lt;h3&gt;魔都号&lt;/h3&gt;&lt;p&gt;2024 年 1 月首航 · 首艘国产大型邮轮&lt;/p&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        <p><b>讲解</b>：<code>swiper-slide</code> 是 Swiper 识别的必写类，缺了就不会被当成一页；<code>wy-cap</code> 是图片下方的文字说明条。四个轮播都加同一张，是为了满足要求里的「slide 结构完整」——每个效果台都有第 6 件展品。</p>
+
+        <p style="margin-top:16px"><b>
+          ② keyboard 键盘控制 —— JS 配置（两处，缺一不可）</b><br>
+        位置：<code>#wySw4</code> 的初始配置，以及按钮点击后重建实例的 <code>wySw4Cfg</code> 里。</p>
+        <pre><code>keyboard: {
+  enabled: true,          // 启用键盘监听
+  onlyInViewport: true,   // 只有轮播在视口内才响应
+}</code></pre>
+        <p><b>讲解</b>：<code>enabled: true</code> 后按 <code>←</code> 切上一张、<code>→</code> 切下一张。Swiper 11 里必须写<b>对象</b>，写 <code>keyboard: true</code> 无效。<br>
+        <code>onlyInViewport: true</code> 很关键：本页有 4 个轮播，不加这个会出现多个实例抢键盘事件。<br>
+        <b>为什么写两处</b>：点效果按钮时执行的是 <code>destroy</code> + <code>new Swiper</code> 重建，新实例不继承旧配置，重建配置里漏写键盘能力就丢了。</p>
+
+        <p style="margin-top:16px"><b>③ mousewheel 滚轮切换 —— 按钮 + 判定 + 兜底 + 配置</b></p>
+        <pre><code>&lt;!-- 第 8 个按钮：用 data-fx 标记要切到的能力 --&gt;
+&lt;button data-fx="mousewheel"&gt;mousewheel 滚轮切换（超纲·任务三）&lt;/button&gt;</code></pre>
+        <pre><code>var newFx = btn.dataset.fx;                 // 读到 "mousewheel"
+var isMousewheel = newFx === 'mousewheel';  // 布尔开关，用于分流
+var wySw4Cfg = {
+  loop: newFx !== 'creative',
+  speed: 800,
+  effect: isMousewheel ? 'slide' : newFx,   // ← 关键兜底
+  autoplay: { delay: 3200, disableOnInteraction: false },
+  pagination: { el: "#wyPag4", clickable: true },
+  keyboard: { enabled: true, onlyInViewport: true },
+};
+if (isMousewheel) {
+  wySw4Cfg.mousewheel = {
+    enabled: true,          // 开启滚轮监听
+    sensitivity: 1,         // 1 = 滚一格切一张
+    releaseOnEdges: false,  // 到首尾不把滚轮事件交还页面
+  };
+}</code></pre>
+        <p><b>讲解</b>：<code>mousewheel</code> 不是切换效果，而是「交互模块」，不在 <code>effect</code> 的合法值里（只有 slide/fade/cube/coverflow/flip/cards/creative）。所以 <code>effect</code> 用三元表达式兜底成 <code>'slide'</code>，滚轮能力另外挂在配置对象上——<b>滚轮决定怎么翻，slide 决定翻的时候长什么样</b>。<br>
+        <code>sensitivity: 1</code> 是灵敏度，数字越大一次翻得越多；
+        <code>releaseOnEdges: false</code> 表示到第一张/最后一张时不把滚轮让给页面，配合 <code>loop</code> 使用体验才连贯。<br>
+        该配置写在 <code>if</code> 里而不写进公共配置，是因为只有点第 8 个按钮时才需要它，否则其它效果也会被滚轮干扰。</p>
+
+        <p style="margin-top:16px"><b>④ 完整执行链路（答辩口述）</b><br>
+        点按钮 → 高亮当前按钮（先清全部 <code>wy-on</code> 再加自己）→ <code>wySw4.destroy(false)</code> 销毁旧实例但保留 DOM → <code>btn.dataset.fx</code> 读能力名 → 拼 <code>wySw4Cfg</code>（creative 额外挂 <code>creativeEffect</code> 并关 loop；mousewheel 兜底 <code>effect: 'slide'</code> 并挂 <code>mousewheel</code>）→ <code>wySw4 = new Swiper("#wySw4", wySw4Cfg)</code> 重建并重新赋值。</p>
+
+        <p style="margin-top:16px"><b>⑤ 预设问答</b><br>
+        <b>Q：为什么 keyboard 和 mousewheel 都要用对象写法？</b> A：Swiper 11 的模块参数要求对象形式，写布尔值不生效。<br>
+        <b>Q：为什么 mousewheel 的 effect 要写 slide？</b> A：mousewheel 是模块不是效果名，直接塞进 effect 是非法值，轮播会渲染失败。<br>
+        <b>Q：sensitivity 改成 3 会怎样？</b> A：滚一格可能连翻三张，控制不住，演示会"跳卡"。<br>
+        <b>Q：滚轮和键盘能同时用吗？</b> A：能，<code>keyboard</code> 一直在配置里，滚轮模式下方向键照样生效。</p>
+      </div>
+    </details>
   </div>
 
   <div class="wy-back"><a href="index.html">← 返回课堂实践中心</a>　<a href="swiper-lesson.html">查看教师讲解版 →</a></div>
@@ -599,14 +657,14 @@ var wySw3 = new Swiper("#wySw3", {
       };
       if (newFx === 'creative') {
         wySw4Cfg.creativeEffect = {
-          prev: {
+          prev: {     //已经划过去那张的 退场终态
             shadow: true,
             translate: ['-30%', 0, -500],
             rotate: [0, 0, -15],
             scale: 0.7,
             opacity: 0.4,
           },
-          next: {
+          next: {  //还没出场那张的 进场起点
             shadow: true,
             translate: ['100%', 0, 0],
             rotate: [0, 0, 15],
