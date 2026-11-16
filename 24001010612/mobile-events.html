@@ -38,6 +38,16 @@
   .gjl_header h1{font-size:22px;font-weight:800;color:#f8fafc;letter-spacing:2px}
   .gjl_header p{margin-top:8px;font-size:12px;color:#64748b;letter-spacing:1px}
 
+  /* ===== 演示视频 ===== */
+  .gjl_video_sec{max-width:420px;margin:24px auto 0;padding:0 16px}
+  .gjl_video_wrap{
+    position:relative;border-radius:16px;overflow:hidden;
+    background:#000;box-shadow:0 16px 40px rgba(0,0,0,.5);
+    border:1px solid #334155;
+  }
+  .gjl_video_wrap video{display:block;width:100%;height:auto}
+  .gjl_video_cap{text-align:center;margin-top:10px;font-size:12px;color:#94a3b8;letter-spacing:.5px}
+
   .gjl_section{
     max-width:420px;margin:28px auto 0;padding:0 16px;
   }
@@ -198,7 +208,7 @@
   <a href="#ges">手势轮播</a>
   <a href="#zoom">双指缩放</a>
   <a href="#sen">摇一摇</a>
-  <a href="#sen">倾斜视差</a>
+  <a href="#video">演示视频</a>
 </nav>
 
 <header class="gjl_header">
@@ -325,6 +335,18 @@
       <span class="gjl_layer gjl_layer--ground"   data-depth="3.5" style="top:88%">🌾</span>
     </div>
     <div class="gjl_gamma-val" id="gjl_gamma_val">倾斜角 gamma：—</div>
+  </div>
+</section>
+
+<!-- ============ 演示视频 ============ -->
+<section class="gjl_section" id="video">
+  <h2>演示视频</h2>
+  <p class="gjl_sub">上方三个任务的真机操作演示，建议在手机端点击播放。</p>
+  <div class="gjl_video_sec">
+    <div class="gjl_video_wrap">
+      <video src="mobile-events-demo.mp4" controls playsinline preload="metadata"
+             webkit-playsinline x5-playsinline></video>
+    </div>
   </div>
 </section>
 
