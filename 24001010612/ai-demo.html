@@ -332,92 +332,29 @@
     <footer class="gjl_footer">葛佳磊 · 24001010612 · 2026 高级网页设计</footer>
   </div>
 
-  <script>
-    /* 作者：葛佳磊 | 建立时间：2026-11-23 20:15 | 使用模型：DeepSeek-V4.1-Flash
-       功能：gjl_shot_upload —— 让五处截图占位框支持点击选择本地图片，并保存到浏览器 IndexedDB */
+    <script>
+    /* 作者：葛佳磊 | 建立时间：2026-11-23 21:40 | 使用模型：DeepSeek-V4.1-Flash
+       功能：gjl_shot_save —— 在页面中点击占位框选择截图，由本机后端保存到课程站点 img 目录，推送到 GitHub 后所有访客可见 */
     (function () {
-      var gjl_dbName = 'gjl_ai_demo_db';
-      var gjl_storeName = 'gjl_shots';
-      var gjl_dbPromise = null;
+      var gjl_apiUrl = 'http://localhost:8612/api/course-image';
       var gjl_activeBox = null;
 
-      // 全局隐藏的文件选择框，避免每次渲染重建
+      // 全局隐藏的文件选择框
       var gjl_fileInput = document.createElement('input');
       gjl_fileInput.type = 'file';
       gjl_fileInput.accept = 'image/*';
       gjl_fileInput.hidden = true;
       document.body.appendChild(gjl_fileInput);
 
-      /* 功能：gjl_openDb —— 打开（或创建）IndexedDB 数据库与截图对象仓库 */
-      function gjl_openDb() {
-        if (gjl_dbPromise) {
-          return gjl_dbPromise;
-        }
-        gjl_dbPromise = new Promise(function (gjl_resolve, gjl_reject) {
-          var gjl_request = indexedDB.open(gjl_dbName, 1);
-          gjl_request.onupgradeneeded = function () {
-            var gjl_db = gjl_request.result;
-            if (!gjl_db.objectStoreNames.contains(gjl_storeName)) {
-              gjl_db.createObjectStore(gjl_storeName);
-            }
-          };
-          gjl_request.onsuccess = function () {
-            gjl_resolve(gjl_request.result);
-          };
-          gjl_request.onerror = function () {
-            gjl_reject(gjl_request.error);
-          };
-        });
-        return gjl_dbPromise;
-      }
-
-      /* 功能：gjl_useStore —— 统一封装 IndexedDB 读写操作，返回 Promise 结果 */
-      function gjl_useStore(gjl_mode, gjl_action) {
-        return gjl_openDb().then(function (gjl_db) {
-          return new Promise(function (gjl_resolve, gjl_reject) {
-            var gjl_tx = gjl_db.transaction(gjl_storeName, gjl_mode);
-            var gjl_request = gjl_action(gjl_tx.objectStore(gjl_storeName));
-            gjl_request.onsuccess = function () {
-              gjl_resolve(gjl_request.result);
-            };
-            gjl_request.onerror = function () {
-              gjl_reject(gjl_request.error);
-            };
-          });
-        });
-      }
-
-      /* 功能：gjl_readShot —— 读取指定截图位置的 dataURL */
-      function gjl_readShot(gjl_slot) {
-        return gjl_useStore('readonly', function (gjl_store) {
-          return gjl_store.get(gjl_slot);
-        });
-      }
-
-      /* 功能：gjl_saveShot —— 把截图 dataURL 写入指定位置 */
-      function gjl_saveShot(gjl_slot, gjl_dataUrl) {
-        return gjl_useStore('readwrite', function (gjl_store) {
-          return gjl_store.put(gjl_dataUrl, gjl_slot);
-        });
-      }
-
-      /* 功能：gjl_deleteShot —— 删除指定位置的截图记录 */
-      function gjl_deleteShot(gjl_slot) {
-        return gjl_useStore('readwrite', function (gjl_store) {
-          return gjl_store.delete(gjl_slot);
-        });
-      }
-
-      /* 功能：gjl_renderShot —— 将截图渲染到占位框，并生成“更换图片 / 移除”按钮 */
-      function gjl_renderShot(gjl_box, gjl_dataUrl) {
-        var gjl_slot = gjl_box.getAttribute('data-gjl_slot');
+      /* 功能：gjl_renderShot —— 在占位框中显示图片，并附加“更换图片”按钮 */
+      function gjl_renderShot(gjl_box, gjl_src) {
         gjl_box.innerHTML = '';
         gjl_box.classList.remove('gjl_shot_empty');
 
         var gjl_img = document.createElement('img');
         gjl_img.className = 'gjl_shot_img';
-        gjl_img.alt = 'AI 应用运行截图 ' + gjl_slot;
-        gjl_img.src = gjl_dataUrl;
+        gjl_img.src = gjl_src;
+        gjl_img.alt = 'AI 应用运行截图';
         gjl_box.appendChild(gjl_img);
 
         var gjl_tools = document.createElement('div');
@@ -432,29 +369,8 @@
           gjl_pickFile(gjl_box);
         });
 
-        var gjl_removeBtn = document.createElement('button');
-        gjl_removeBtn.type = 'button';
-        gjl_removeBtn.className = 'gjl_shot_btn gjl_shot_btn_danger';
-        gjl_removeBtn.textContent = '移除';
-        gjl_removeBtn.addEventListener('click', function (gjl_event) {
-          gjl_event.stopPropagation();
-          gjl_deleteShot(gjl_slot).then(function () {
-            gjl_clearShot(gjl_box);
-            console.log('[gjl] 已移除截图 ' + gjl_slot);
-          }).catch(function (gjl_err) {
-            console.error('[gjl] 移除截图失败：', gjl_err);
-          });
-        });
-
         gjl_tools.appendChild(gjl_changeBtn);
-        gjl_tools.appendChild(gjl_removeBtn);
         gjl_box.appendChild(gjl_tools);
-      }
-
-      /* 功能：gjl_clearShot —— 清空占位框，恢复为可点击添加的虚线状态 */
-      function gjl_clearShot(gjl_box) {
-        gjl_box.innerHTML = '';
-        gjl_box.classList.add('gjl_shot_empty');
       }
 
       /* 功能：gjl_pickFile —— 记录当前操作的占位框并唤起文件选择框 */
@@ -464,7 +380,64 @@
         gjl_fileInput.click();
       }
 
-      /* 功能：gjl_handleFile —— 读取用户选择的图片，保存并渲染到当前占位框 */
+      /* 功能：gjl_toPng —— 将图片等比缩放到最长边 1600px 并转为 PNG，统一保存格式 */
+      function gjl_toPng(gjl_file) {
+        return new Promise(function (gjl_resolve, gjl_reject) {
+          var gjl_image = new Image();
+          var gjl_objectUrl = URL.createObjectURL(gjl_file);
+
+          gjl_image.onload = function () {
+            var gjl_maxSize = 1600;
+            var gjl_scale = Math.min(1, gjl_maxSize / Math.max(gjl_image.naturalWidth, gjl_image.naturalHeight));
+            var gjl_canvas = document.createElement('canvas');
+            gjl_canvas.width = Math.round(gjl_image.naturalWidth * gjl_scale);
+            gjl_canvas.height = Math.round(gjl_image.naturalHeight * gjl_scale);
+            gjl_canvas.getContext('2d').drawImage(gjl_image, 0, 0, gjl_canvas.width, gjl_canvas.height);
+            URL.revokeObjectURL(gjl_objectUrl);
+
+            gjl_canvas.toBlob(function (gjl_blob) {
+              if (gjl_blob) {
+                gjl_resolve(gjl_blob);
+              } else {
+                gjl_reject(new Error('图片转换失败'));
+              }
+            }, 'image/png');
+          };
+
+          gjl_image.onerror = function () {
+            URL.revokeObjectURL(gjl_objectUrl);
+            gjl_reject(new Error('图片读取失败'));
+          };
+
+          gjl_image.src = gjl_objectUrl;
+        });
+      }
+
+      /* 功能：gjl_uploadShot —— 把截图上传到本机后端，保存成功后显示新图片 */
+      function gjl_uploadShot(gjl_box, gjl_file) {
+        var gjl_slot = gjl_box.getAttribute('data-gjl_slot');
+
+        gjl_toPng(gjl_file).then(function (gjl_blob) {
+          var gjl_form = new FormData();
+          gjl_form.append('image', gjl_blob, 'gjl_ai_demo_' + gjl_slot + '.png');
+          gjl_form.append('slot', gjl_slot);
+          return fetch(gjl_apiUrl, { method: 'POST', body: gjl_form });
+        }).then(function (gjl_response) {
+          return gjl_response.json();
+        }).then(function (gjl_result) {
+          console.log('[gjl] 截图上传结果：', gjl_result);
+          if (gjl_result.code !== 0) {
+            throw new Error(gjl_result.msg);
+          }
+          gjl_renderShot(gjl_box, gjl_result.data.url + '?v=' + Date.now());
+          alert('截图已保存到项目 img 目录，推送到 GitHub 后其他人也能看到。');
+        }).catch(function (gjl_err) {
+          console.error('[gjl] 截图上传失败：', gjl_err);
+          alert('上传失败：' + gjl_err.message + '\n请先在本机启动后端（端口 8612）再上传。');
+        });
+      }
+
+      /* 功能：gjl_handleFile —— 校验用户选择的图片并触发上传 */
       gjl_fileInput.addEventListener('change', function () {
         var gjl_file = gjl_fileInput.files && gjl_fileInput.files[0];
         if (!gjl_file || !gjl_activeBox) {
@@ -474,50 +447,35 @@
           alert('请选择图片文件');
           return;
         }
-
-        var gjl_box = gjl_activeBox;
-        var gjl_slot = gjl_box.getAttribute('data-gjl_slot');
-        var gjl_reader = new FileReader();
-
-        gjl_reader.onload = function () {
-          var gjl_dataUrl = gjl_reader.result;
-          gjl_renderShot(gjl_box, gjl_dataUrl);
-          gjl_saveShot(gjl_slot, gjl_dataUrl).then(function () {
-            console.log('[gjl] 截图 ' + gjl_slot + ' 已保存到浏览器本地：', gjl_file.name);
-          }).catch(function (gjl_err) {
-            console.error('[gjl] 截图保存失败（刷新后可能丢失）：', gjl_err);
-          });
-        };
-
-        gjl_reader.onerror = function () {
-          alert('图片读取失败，请换一张试试');
-        };
-
-        gjl_reader.readAsDataURL(gjl_file);
+        gjl_uploadShot(gjl_activeBox, gjl_file);
       });
 
-      /* 功能：gjl_init —— 为每个占位框绑定点击上传，并恢复浏览器中已保存的截图 */
+      /* 功能：gjl_init —— 绑定点击上传，并自动显示 img 目录中已保存的截图 */
       function gjl_init() {
         var gjl_boxes = document.querySelectorAll('.gjl_shot');
+
         gjl_boxes.forEach(function (gjl_box, gjl_index) {
-          gjl_box.setAttribute('data-gjl_slot', String(gjl_index + 1));
+          var gjl_slot = String(gjl_index + 1);
+          gjl_box.setAttribute('data-gjl_slot', gjl_slot);
           gjl_box.setAttribute('data-gjl_tip', '点击添加 · ' + gjl_box.getAttribute('data-gjl_tip'));
           gjl_box.addEventListener('click', function () {
             gjl_pickFile(gjl_box);
           });
 
-          gjl_readShot(String(gjl_index + 1)).then(function (gjl_dataUrl) {
-            if (gjl_dataUrl) {
-              gjl_renderShot(gjl_box, gjl_dataUrl);
+          // 探测 img 目录中是否已有保存过的截图
+          var gjl_probe = new Image();
+          gjl_probe.onload = function () {
+            if (!gjl_box.querySelector('.gjl_shot_img')) {
+              gjl_renderShot(gjl_box, 'img/gjl_ai_demo_' + gjl_slot + '.png');
             }
-          }).catch(function (gjl_err) {
-            console.warn('[gjl] 读取本地截图失败：', gjl_err);
-          });
+          };
+          gjl_probe.src = 'img/gjl_ai_demo_' + gjl_slot + '.png';
         });
       }
 
       gjl_init();
     })();
   </script>
+
 </body>
 </html>
