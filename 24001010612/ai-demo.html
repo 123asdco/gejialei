@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<!--
+  作者：葛佳磊
+  建立时间：2026-11-23 19:45
+  使用模型：DeepSeek-V4.1-Flash
+  功能名称及简介：AI 应用测试结果 —— 展示校园二手平台 AI 应用五项能力的运行截图（在线客服双服务商切换、知识库问答、图像识别、语音识别）
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 应用测试结果 | 葛佳磊</title>
+  <style>
+    /* 作者：葛佳磊 | 建立时间：2026-11-23 19:45 | 使用模型：DeepSeek-V4.1-Flash
+       功能：页面基础样式 —— 浅色背景、居中白色卡片与响应式排版 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      padding: 36px 20px 48px;
+      font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+      background: #edf1f7;
+      color: #111827;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .gjl_wrap {
+      width: 100%;
+      max-width: 980px;
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+    }
+
+    .gjl_topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .gjl_home_link {
+      font-size: 14px;
+      color: #2f6bff;
+      text-decoration: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .gjl_home_link:hover {
+      opacity: 0.7;
+    }
+
+    .gjl_badge {
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #2f6bff;
+      border: 1px solid rgba(47, 107, 255, 0.3);
+      border-radius: 999px;
+      background: rgba(47, 107, 255, 0.06);
+    }
+
+    .gjl_title {
+      font-size: clamp(28px, 5vw, 40px);
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #111827;
+    }
+
+    .gjl_subtitle {
+      margin-top: 10px;
+      font-size: 15px;
+      color: #5f6f86;
+    }
+
+    .gjl_note {
+      padding: 16px 20px;
+      font-size: 14px;
+      line-height: 1.9;
+      color: #5f6f86;
+      border-radius: 12px;
+      border: 1px solid #e0e8f5;
+      border-left: 4px solid #2f6bff;
+      background: #f7faff;
+    }
+
+    .gjl_section {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .gjl_section_tag {
+      align-self: flex-start;
+      padding: 4px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #2f6bff;
+      border-radius: 6px;
+      background: rgba(47, 107, 255, 0.1);
+    }
+
+    .gjl_card {
+      padding: 24px 26px;
+      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid #e6ebf3;
+      box-shadow: 0 6px 24px rgba(24, 41, 75, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .gjl_card_head {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .gjl_card_icon {
+      flex: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      background: linear-gradient(135deg, #2f6bff, #7b5cff);
+    }
+
+    .gjl_card_text {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .gjl_card_title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .gjl_card_desc {
+      font-size: 14px;
+      line-height: 1.8;
+      color: #5f6f86;
+    }
+
+    .gjl_shot {
+      position: relative;
+      min-height: 200px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e6ebf3;
+      background: #f4f7fc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .gjl_shot:hover {
+      border-color: #2f6bff;
+      background: #eef4ff;
+    }
+
+    .gjl_shot_img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .gjl_shot_empty::after {
+      content: attr(data-gjl_tip);
+      padding: 24px;
+      font-size: 14px;
+      line-height: 1.8;
+      text-align: center;
+      color: #93a2b8;
+    }
+
+    .gjl_shot_tools {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: none;
+      gap: 8px;
+    }
+
+    .gjl_shot:hover .gjl_shot_tools {
+      display: flex;
+    }
+
+    .gjl_shot_btn {
+      padding: 5px 10px;
+      font-family: inherit;
+      font-size: 12px;
+      color: #2f6bff;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(47, 107, 255, 0.35);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .gjl_shot_btn:hover {
+      background: #ffffff;
+    }
+
+    .gjl_shot_btn_danger {
+      color: #d64545;
+      border-color: rgba(214, 69, 69, 0.35);
+    }
+
+    .gjl_footer {
+      text-align: center;
+      font-size: 13px;
+      letter-spacing: 1px;
+      color: #93a2b8;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 24px 14px 36px;
+      }
+
+      .gjl_card {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="gjl_wrap">
+    <div class="gjl_topbar">
+      <a class="gjl_home_link" href="index.html">← 返回课堂首页</a>
+      <span class="gjl_badge">AI DEMO</span>
+    </div>
+
+    <header>
+      <h1 class="gjl_title">AI 应用测试结果</h1>
+      <p class="gjl_subtitle">课程作业运行截图 · 五项能力全部实现</p>
+    </header>
+
+    <p class="gjl_note">
+      说明：以下五张截图来自本地运行的 AI 应用（端口 8612），涵盖在线客服（双服务商切换）、知识库问答、图像识别、语音识别四项能力；在线客服接入硅基流动 DeepSeek-V4-Flash 与七牛 conatus-free，可一键切换并继续对话。
+    </p>
+
+    <section class="gjl_section">
+      <span class="gjl_section_tag">AI 助手 · 在线客服</span>
+
+      <article class="gjl_card">
+        <div class="gjl_card_head">
+          <span class="gjl_card_icon">1</span>
+          <div class="gjl_card_text">
+            <h2 class="gjl_card_title">AI 助手 · 在线客服（硅基流动）</h2>
+            <p class="gjl_card_desc">接入硅基流动 DeepSeek-V4-Flash，首轮对话回答网站功能简介</p>
+          </div>
+        </div>
+        <figure class="gjl_shot gjl_shot_empty" data-gjl_tip="截图 1 位置 · AI 助手 · 在线客服（硅基流动）"></figure>
+      </article>
+
+      <article class="gjl_card">
+        <div class="gjl_card_head">
+          <span class="gjl_card_icon">2</span>
+          <div class="gjl_card_text">
+            <h2 class="gjl_card_title">AI 助手 · 切换七牛继续对话</h2>
+            <p class="gjl_card_desc">一键切换到七牛 conatus-free 服务商，上下文保持连续，继续答复后续提问</p>
+          </div>
+        </div>
+        <figure class="gjl_shot gjl_shot_empty" data-gjl_tip="截图 2 位置 · AI 助手 · 切换七牛继续对话"></figure>
+      </article>
+    </section>
+
+    <section class="gjl_section">
+      <span class="gjl_section_tag">知识库问答</span>
+
+      <article class="gjl_card">
+        <div class="gjl_card_head">
+          <span class="gjl_card_icon">3</span>
+          <div class="gjl_card_text">
+            <h2 class="gjl_card_title">知识库问答（RAG 检索增强生成）</h2>
+            <p class="gjl_card_desc">支持上传 txt / md / pdf / docx / pptx，问答时引用文档片段作为答案来源</p>
+          </div>
+        </div>
+        <figure class="gjl_shot gjl_shot_empty" data-gjl_tip="截图 3 位置 · 知识库问答"></figure>
+      </article>
+    </section>
+
+    <section class="gjl_section">
+      <span class="gjl_section_tag">图像识别</span>
+
+      <article class="gjl_card">
+        <div class="gjl_card_head">
+          <span class="gjl_card_icon">4</span>
+          <div class="gjl_card_text">
+            <h2 class="gjl_card_title">图像识别 · 中文内容描述</h2>
+            <p class="gjl_card_desc">上传图片后 AI 自动识别主体、构图、色彩风格，生成结构化中文描述</p>
+          </div>
+        </div>
+        <figure class="gjl_shot gjl_shot_empty" data-gjl_tip="截图 4 位置 · 图像识别"></figure>
+      </article>
+    </section>
+
+    <section class="gjl_section">
+      <span class="gjl_section_tag">语音识别</span>
+
+      <article class="gjl_card">
+        <div class="gjl_card_head">
+          <span class="gjl_card_icon">5</span>
+          <div class="gjl_card_text">
+            <h2 class="gjl_card_title">语音识别 · 录音转文字</h2>
+            <p class="gjl_card_desc">支持麦克风实时录音或上传音频文件（mp3 / wav / m4a / ogg / webm，≤25MB），模型为 Qwen/Qwen3-ASR-1.7B</p>
+          </div>
+        </div>
+        <figure class="gjl_shot gjl_shot_empty" data-gjl_tip="截图 5 位置 · 语音识别"></figure>
+      </article>
+    </section>
+
+    <footer class="gjl_footer">葛佳磊 · 24001010612 · 2026 高级网页设计</footer>
+  </div>
+
+  <script>
+    /* 作者：葛佳磊 | 建立时间：2026-11-23 20:15 | 使用模型：DeepSeek-V4.1-Flash
+       功能：gjl_shot_upload —— 让五处截图占位框支持点击选择本地图片，并保存到浏览器 IndexedDB */
+    (function () {
+      var gjl_dbName = 'gjl_ai_demo_db';
+      var gjl_storeName = 'gjl_shots';
+      var gjl_dbPromise = null;
+      var gjl_activeBox = null;
+
+      // 全局隐藏的文件选择框，避免每次渲染重建
+      var gjl_fileInput = document.createElement('input');
+      gjl_fileInput.type = 'file';
+      gjl_fileInput.accept = 'image/*';
+      gjl_fileInput.hidden = true;
+      document.body.appendChild(gjl_fileInput);
+
+      /* 功能：gjl_openDb —— 打开（或创建）IndexedDB 数据库与截图对象仓库 */
+      function gjl_openDb() {
+        if (gjl_dbPromise) {
+          return gjl_dbPromise;
+        }
+        gjl_dbPromise = new Promise(function (gjl_resolve, gjl_reject) {
+          var gjl_request = indexedDB.open(gjl_dbName, 1);
+          gjl_request.onupgradeneeded = function () {
+            var gjl_db = gjl_request.result;
+            if (!gjl_db.objectStoreNames.contains(gjl_storeName)) {
+              gjl_db.createObjectStore(gjl_storeName);
+            }
+          };
+          gjl_request.onsuccess = function () {
+            gjl_resolve(gjl_request.result);
+          };
+          gjl_request.onerror = function () {
+            gjl_reject(gjl_request.error);
+          };
+        });
+        return gjl_dbPromise;
+      }
+
+      /* 功能：gjl_useStore —— 统一封装 IndexedDB 读写操作，返回 Promise 结果 */
+      function gjl_useStore(gjl_mode, gjl_action) {
+        return gjl_openDb().then(function (gjl_db) {
+          return new Promise(function (gjl_resolve, gjl_reject) {
+            var gjl_tx = gjl_db.transaction(gjl_storeName, gjl_mode);
+            var gjl_request = gjl_action(gjl_tx.objectStore(gjl_storeName));
+            gjl_request.onsuccess = function () {
+              gjl_resolve(gjl_request.result);
+            };
+            gjl_request.onerror = function () {
+              gjl_reject(gjl_request.error);
+            };
+          });
+        });
+      }
+
+      /* 功能：gjl_readShot —— 读取指定截图位置的 dataURL */
+      function gjl_readShot(gjl_slot) {
+        return gjl_useStore('readonly', function (gjl_store) {
+          return gjl_store.get(gjl_slot);
+        });
+      }
+
+      /* 功能：gjl_saveShot —— 把截图 dataURL 写入指定位置 */
+      function gjl_saveShot(gjl_slot, gjl_dataUrl) {
+        return gjl_useStore('readwrite', function (gjl_store) {
+          return gjl_store.put(gjl_dataUrl, gjl_slot);
+        });
+      }
+
+      /* 功能：gjl_deleteShot —— 删除指定位置的截图记录 */
+      function gjl_deleteShot(gjl_slot) {
+        return gjl_useStore('readwrite', function (gjl_store) {
+          return gjl_store.delete(gjl_slot);
+        });
+      }
+
+      /* 功能：gjl_renderShot —— 将截图渲染到占位框，并生成“更换图片 / 移除”按钮 */
+      function gjl_renderShot(gjl_box, gjl_dataUrl) {
+        var gjl_slot = gjl_box.getAttribute('data-gjl_slot');
+        gjl_box.innerHTML = '';
+        gjl_box.classList.remove('gjl_shot_empty');
+
+        var gjl_img = document.createElement('img');
+        gjl_img.className = 'gjl_shot_img';
+        gjl_img.alt = 'AI 应用运行截图 ' + gjl_slot;
+        gjl_img.src = gjl_dataUrl;
+        gjl_box.appendChild(gjl_img);
+
+        var gjl_tools = document.createElement('div');
+        gjl_tools.className = 'gjl_shot_tools';
+
+        var gjl_changeBtn = document.createElement('button');
+        gjl_changeBtn.type = 'button';
+        gjl_changeBtn.className = 'gjl_shot_btn';
+        gjl_changeBtn.textContent = '更换图片';
+        gjl_changeBtn.addEventListener('click', function (gjl_event) {
+          gjl_event.stopPropagation();
+          gjl_pickFile(gjl_box);
+        });
+
+        var gjl_removeBtn = document.createElement('button');
+        gjl_removeBtn.type = 'button';
+        gjl_removeBtn.className = 'gjl_shot_btn gjl_shot_btn_danger';
+        gjl_removeBtn.textContent = '移除';
+        gjl_removeBtn.addEventListener('click', function (gjl_event) {
+          gjl_event.stopPropagation();
+          gjl_deleteShot(gjl_slot).then(function () {
+            gjl_clearShot(gjl_box);
+            console.log('[gjl] 已移除截图 ' + gjl_slot);
+          }).catch(function (gjl_err) {
+            console.error('[gjl] 移除截图失败：', gjl_err);
+          });
+        });
+
+        gjl_tools.appendChild(gjl_changeBtn);
+        gjl_tools.appendChild(gjl_removeBtn);
+        gjl_box.appendChild(gjl_tools);
+      }
+
+      /* 功能：gjl_clearShot —— 清空占位框，恢复为可点击添加的虚线状态 */
+      function gjl_clearShot(gjl_box) {
+        gjl_box.innerHTML = '';
+        gjl_box.classList.add('gjl_shot_empty');
+      }
+
+      /* 功能：gjl_pickFile —— 记录当前操作的占位框并唤起文件选择框 */
+      function gjl_pickFile(gjl_box) {
+        gjl_activeBox = gjl_box;
+        gjl_fileInput.value = '';
+        gjl_fileInput.click();
+      }
+
+      /* 功能：gjl_handleFile —— 读取用户选择的图片，保存并渲染到当前占位框 */
+      gjl_fileInput.addEventListener('change', function () {
+        var gjl_file = gjl_fileInput.files && gjl_fileInput.files[0];
+        if (!gjl_file || !gjl_activeBox) {
+          return;
+        }
+        if (gjl_file.type.indexOf('image/') !== 0) {
+          alert('请选择图片文件');
+          return;
+        }
+
+        var gjl_box = gjl_activeBox;
+        var gjl_slot = gjl_box.getAttribute('data-gjl_slot');
+        var gjl_reader = new FileReader();
+
+        gjl_reader.onload = function () {
+          var gjl_dataUrl = gjl_reader.result;
+          gjl_renderShot(gjl_box, gjl_dataUrl);
+          gjl_saveShot(gjl_slot, gjl_dataUrl).then(function () {
+            console.log('[gjl] 截图 ' + gjl_slot + ' 已保存到浏览器本地：', gjl_file.name);
+          }).catch(function (gjl_err) {
+            console.error('[gjl] 截图保存失败（刷新后可能丢失）：', gjl_err);
+          });
+        };
+
+        gjl_reader.onerror = function () {
+          alert('图片读取失败，请换一张试试');
+        };
+
+        gjl_reader.readAsDataURL(gjl_file);
+      });
+
+      /* 功能：gjl_init —— 为每个占位框绑定点击上传，并恢复浏览器中已保存的截图 */
+      function gjl_init() {
+        var gjl_boxes = document.querySelectorAll('.gjl_shot');
+        gjl_boxes.forEach(function (gjl_box, gjl_index) {
+          gjl_box.setAttribute('data-gjl_slot', String(gjl_index + 1));
+          gjl_box.setAttribute('data-gjl_tip', '点击添加 · ' + gjl_box.getAttribute('data-gjl_tip'));
+          gjl_box.addEventListener('click', function () {
+            gjl_pickFile(gjl_box);
+          });
+
+          gjl_readShot(String(gjl_index + 1)).then(function (gjl_dataUrl) {
+            if (gjl_dataUrl) {
+              gjl_renderShot(gjl_box, gjl_dataUrl);
+            }
+          }).catch(function (gjl_err) {
+            console.warn('[gjl] 读取本地截图失败：', gjl_err);
+          });
+        });
+      }
+
+      gjl_init();
+    })();
+  </script>
+</body>
+</html>
